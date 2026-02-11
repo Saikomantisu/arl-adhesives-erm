@@ -4,7 +4,9 @@ import type { InvoiceItem } from '~/lib/data';
 interface SaleState {
   customer_id: string | null;
   items: InvoiceItem[];
+  po_number: string;
   setCustomer: (id: string | null) => void;
+  setPoNumber: (po: string) => void;
   addItem: (item: InvoiceItem) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, qty: number) => void;
@@ -17,7 +19,9 @@ interface SaleState {
 export const useSaleStore = create<SaleState>((set, get) => ({
   customer_id: null,
   items: [],
+  po_number: '',
   setCustomer: (id) => set({ customer_id: id }),
+  setPoNumber: (po) => set({ po_number: po }),
   addItem: (item) =>
     set((s) => {
       const exists = s.items.find((i) => i.product_id === item.product_id);
@@ -51,7 +55,7 @@ export const useSaleStore = create<SaleState>((set, get) => ({
           : i,
       ),
     })),
-  clearSale: () => set({ customer_id: null, items: [] }),
+  clearSale: () => set({ customer_id: null, items: [], po_number: '' }),
   subtotal: () => get().items.reduce((sum, i) => sum + i.total_price, 0),
   tax: () => get().items.reduce((sum, i) => sum + i.total_price, 0) * 0.18,
   total: () => {

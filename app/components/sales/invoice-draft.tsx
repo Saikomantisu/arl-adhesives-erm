@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { Input } from '~/components/ui/input';
 import { cn } from '~/lib/utils';
 import { Button } from '~/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
@@ -19,7 +20,9 @@ export function InvoiceDraft() {
   const {
     customer_id,
     items,
+    po_number,
     setCustomer,
+    setPoNumber,
     removeItem,
     updateQuantity,
     clearSale,
@@ -99,6 +102,18 @@ export function InvoiceDraft() {
             This customer has overdue payments
           </motion.p>
         )}
+      </div>
+
+      <div className='mb-4'>
+        <label className='mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-zinc-400'>
+          PO Number
+        </label>
+        <Input
+          placeholder='Optional PO number…'
+          value={po_number}
+          onChange={(e) => setPoNumber(e.target.value)}
+          className='h-9 text-sm'
+        />
       </div>
 
       <Separator className='mb-4' />

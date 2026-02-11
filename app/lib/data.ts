@@ -16,13 +16,14 @@ export interface Customer {
   id?: string;
   email: string;
   phone: string;
+  payee: string;
+  avatar: string;
   company: string;
   address: string;
   vat_reg_no: string;
+  activities: Activity[];
   status: CustomerStatus;
   lifetime_value: number;
-  avatar: string;
-  activities: Activity[];
 }
 
 export interface Activity {
@@ -44,13 +45,13 @@ export interface Invoice {
   id?: string;
   number: string;
   customer_id: string;
-  items: InvoiceItem[];
   status: InvoiceStatus;
-  createdAt: Date;
+  created_at: Date;
   due_date: Date;
   subtotal: number;
   tax: number;
   total: number;
+  po_number?: string;
 }
 
 export interface InvoiceItem {
@@ -239,6 +240,13 @@ export const formatCurrency = (n: number) =>
     style: 'currency',
     currency: 'LKR',
     maximumFractionDigits: 0,
+  }).format(n);
+
+export const invoiceFormatCurrency = (n: number) =>
+  new Intl.NumberFormat('en-LK', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(n);
 
 export const getCustomer = (id: string) => customers.find((c) => c.id === id);

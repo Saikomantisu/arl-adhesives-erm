@@ -14,7 +14,7 @@ import { cn } from '~/lib/utils';
 import { motion } from 'framer-motion';
 import type { Activity } from '~/lib/data';
 import { Card } from '~/components/ui/card';
-import { useParams, Link, data } from 'react-router';
+import { useParams, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency, timeAgo } from '~/lib/data';
 import { TopBar } from '~/components/layouts/top-bar';

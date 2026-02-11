@@ -174,3 +174,39 @@ body {
     background-color: theme(--color-rose-900);
   }
 }
+
+@layer utilities {
+  /* A4 Page Setup */
+  .invoice-page {
+    width: 210mm;
+    min-height: 297mm;
+  }
+  @media print {
+    body {
+      background: none !important;
+      padding: 0 !important;
+    }
+    body.printing-invoice * {
+      visibility: hidden !important;
+    }
+    body.printing-invoice .invoice-print-root,
+    body.printing-invoice .invoice-print-root * {
+      visibility: visible !important;
+    }
+    body.printing-invoice .invoice-print-root {
+      position: fixed !important;
+      inset: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .invoice-page {
+      box-shadow: none !important;
+      margin: 0 !important;
+      padding: 10mm 15mm !important;
+      width: 100% !important;
+    }
+    .no-print {
+      display: none;
+    }
+  }
+}

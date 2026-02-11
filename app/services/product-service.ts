@@ -2,11 +2,20 @@ import { supabase } from '~/lib/supabase';
 import type { Product } from '~/lib/data';
 
 export const fetchProducts = async (): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data ?? [];
+    if (error) {
+      console.error('Supabase fetchProducts error:', error);
+      throw new Error(`Failed to fetch products: ${error.message}`);
+    }
+
+    return data ?? [];
+  } catch (err) {
+    console.error('Unexpected error in fetchProducts:', err);
+    throw err instanceof Error ? err : new Error('Unknown error while fetching products');
+  }
 };

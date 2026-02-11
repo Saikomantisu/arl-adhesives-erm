@@ -25,7 +25,13 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Invoices | ARL Adhesives' }];
 };
 
-function MobileInvoiceRow({ inv }: { inv: Invoice }) {
+function MobileInvoiceRow({
+  inv,
+  openPreview,
+}: {
+  inv: Invoice;
+  openPreview: (inv: Invoice) => void;
+}) {
   const { data: customer } = useQuery({
     queryKey: ['customers', inv.customer_id],
     queryFn: () => fetchCustomerById(inv.customer_id),
@@ -33,16 +39,17 @@ function MobileInvoiceRow({ inv }: { inv: Invoice }) {
   });
 
   return (
-    <div key={inv.id} className='p-4'>
+    <div className='p-4'>
       <div className='flex items-start justify-between gap-3'>
         <div className='min-w-0 flex-1'>
           <p className='truncate text-sm font-medium text-zinc-900 dark:text-zinc-50'>
             {inv.number}
           </p>
 
-          <p className='mt-1 truncate text-xs text-zinc-500'>
-            {customer?.company}
-          </p>
+          <p className='mt-1 truncate text-xs text-zinc-500'>{customer?.company}</p>
+          {inv.po_number && (
+            <p className='mt-0.5 text-[10px] font-medium text-zinc-400'>PO: {inv.po_number}</p>
+          )}
           <p className='mt-1 text-xs text-zinc-500'>
             Due {new Date(inv.due_date).toLocaleDateString('en-LK')}
           </p>
@@ -58,17 +65,23 @@ function MobileInvoiceRow({ inv }: { inv: Invoice }) {
         </div>
       </div>
 
-      {/* <div className='mt-3 flex justify-end'>
-        <Button variant='ghost' size='sm' onClick={() => openPreview(inv)}>
+      <div className='mt-3 flex justify-end'>
+        {/* <Button variant='ghost' size='sm' onClick={() => openPreview(inv)}>
           <Eye className='mr-2 h-4 w-4 text-zinc-400' />
           Preview
-        </Button>
-      </div> */}
+        </Button> */}
+      </div>
     </div>
   );
 }
 
-function DesktopInvoiceRow({ inv }: { inv: Invoice }) {
+function DesktopInvoiceRow({
+  inv,
+  openPreview,
+}: {
+  inv: Invoice;
+  openPreview: (inv: Invoice) => void;
+}) {
   const { data: customer } = useQuery({
     queryKey: ['customers', inv.customer_id],
     queryFn: () => fetchCustomerById(inv.customer_id),
@@ -76,9 +89,12 @@ function DesktopInvoiceRow({ inv }: { inv: Invoice }) {
   });
 
   return (
-    <TableRow key={inv.id}>
+    <TableRow>
       <TableCell>
         <span className='text-sm font-medium text-zinc-900 dark:text-zinc-50'>{inv.number}</span>
+      </TableCell>
+      <TableCell>
+        <span className='text-xs text-zinc-500'>{inv.po_number || '-'}</span>
       </TableCell>
       <TableCell>
         <div className='flex items-center gap-2'>
@@ -100,9 +116,9 @@ function DesktopInvoiceRow({ inv }: { inv: Invoice }) {
         {new Date(inv.due_date).toLocaleDateString('en-LK')}
       </TableCell>
       <TableCell>
-        {/* <Button variant='ghost' size='icon' className='h-8 w-8' onClick={() => openPreview(inv)}>
+        <Button variant='ghost' size='icon' className='h-8 w-8' onClick={() => openPreview(inv)}>
           <Eye className='h-4 w-4 text-zinc-400' />
-        </Button> */}
+        </Button>
       </TableCell>
     </TableRow>
   );
@@ -117,9 +133,9 @@ export default function SalesIndexPage() {
   const [previewInvoiceId, setPreviewInvoiceId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  // Toggle this to `true` to see the empty state
   const showEmpty = false;
   const data = showEmpty ? [] : (invoiceRows ?? []);
+
   const previewInvoice = previewInvoiceId
     ? (invoiceRows!.find((i) => i.id === previewInvoiceId) ?? null)
     : null;
@@ -185,7 +201,7 @@ export default function SalesIndexPage() {
               {/* Mobile cards */}
               <div className='md:hidden divide-y divide-zinc-100 dark:divide-zinc-800'>
                 {data.map((inv) => (
-                  <MobileInvoiceRow inv={inv} />
+                  <MobileInvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
                 ))}
               </div>
 
@@ -195,6 +211,7 @@ export default function SalesIndexPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Invoice</TableHead>
+                      <TableHead>PO Number</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead className='text-right'>Amount</TableHead>
                       <TableHead>Status</TableHead>
@@ -204,7 +221,7 @@ export default function SalesIndexPage() {
                   </TableHeader>
                   <TableBody>
                     {data.map((inv) => (
-                      <DesktopInvoiceRow inv={inv} />
+                      <DesktopInvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
                     ))}
                   </TableBody>
                 </Table>
@@ -214,11 +231,11 @@ export default function SalesIndexPage() {
         )}
       </div>
 
-      {/* <InvoicePreviewModal
+      <InvoicePreviewModal
         invoice={previewInvoice}
         open={previewOpen}
         onOpenChange={setPreviewOpen}
-      /> */}
+      />
     </div>
   );
 }
