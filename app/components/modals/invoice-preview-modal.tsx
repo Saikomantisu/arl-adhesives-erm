@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog';
 import { Button } from '~/components/ui/button';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { formatCurrency, invoiceFormatCurrency, type Invoice } from '~/lib/data';
+import { invoiceFormatCurrency, type Invoice } from '~/lib/data';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchInvoiceItems } from '~/services/invoice-service';
@@ -32,7 +32,6 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  // Responsive scaling: fit the 210mm (794px) invoice into the container width
   const updateScale = useCallback(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -129,7 +128,7 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className='max-w-full h-dvh rounded-none inset-0 top-0 left-0 translate-x-0 translate-y-0
-          sm:max-w-5xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:top-1/2 sm:left-1/2
+          sm:max-w-5xl sm:max-h-[90vh] sm:rounded-2xl sm:top-1/2 sm:left-1/2
           sm:-translate-x-1/2 sm:-translate-y-1/2
           p-0 overflow-hidden border-none flex flex-col gap-0'
         showCloseButton={false}
@@ -226,9 +225,7 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
                   <h3 className='font-bold underline mb-1 uppercase text-xs'>Consignee:</h3>
                   <p className='leading-relaxed'>{customer?.company},</p>
 
-                  <p className='leading-relaxed'>
-                    <AddressFormatter address={customer?.address!} />
-                  </p>
+                  <p className='leading-relaxed w-[200px]'>{customer?.address!}</p>
 
                   <p className='leading-relaxed'>VAT Registration No: {customer?.vat_reg_no}</p>
                 </div>
@@ -345,23 +342,5 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function AddressFormatter({ address }: { address: string }) {
-  const addressLines = address
-    .split(',')
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  return (
-    <div className='address-box'>
-      {addressLines.map((line, index) => (
-        <p className='leading-relaxed' key={index}>
-          {line}
-          {index < addressLines.length - 1 ? ',' : ''}
-        </p>
-      ))}
-    </div>
   );
 }

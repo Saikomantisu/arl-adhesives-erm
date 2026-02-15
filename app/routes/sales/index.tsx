@@ -47,8 +47,9 @@ function MobileInvoiceRow({
           </p>
 
           <p className='mt-1 truncate text-xs text-zinc-500'>{customer?.company}</p>
+
           {inv.po_number && (
-            <p className='mt-0.5 text-[10px] font-medium text-zinc-400'>PO: {inv.po_number}</p>
+            <p className='mt-1 text-xs text-zinc-500'>PO: {inv.po_number}</p>
           )}
           <p className='mt-1 text-xs text-zinc-500'>
             Due {new Date(inv.due_date).toLocaleDateString('en-LK')}
@@ -66,10 +67,10 @@ function MobileInvoiceRow({
       </div>
 
       <div className='mt-3 flex justify-end'>
-        {/* <Button variant='ghost' size='sm' onClick={() => openPreview(inv)}>
+        <Button variant='ghost' size='sm' onClick={() => openPreview(inv)}>
           <Eye className='mr-2 h-4 w-4 text-zinc-400' />
           Preview
-        </Button> */}
+        </Button>
       </div>
     </div>
   );
@@ -93,9 +94,11 @@ function DesktopInvoiceRow({
       <TableCell>
         <span className='text-sm font-medium text-zinc-900 dark:text-zinc-50'>{inv.number}</span>
       </TableCell>
+
       <TableCell>
-        <span className='text-xs text-zinc-500'>{inv.po_number || '-'}</span>
+        <span className='text-sm text-zinc-500'>{inv.po_number || '-'}</span>
       </TableCell>
+
       <TableCell>
         <div className='flex items-center gap-2'>
           <div className='flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'>
@@ -106,15 +109,19 @@ function DesktopInvoiceRow({
           </div>
         </div>
       </TableCell>
+
       <TableCell className='text-right text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
         {formatCurrency(inv.total)}
       </TableCell>
+
       <TableCell>
         <StatusBadge status={inv.status} />
       </TableCell>
+
       <TableCell className='text-sm text-zinc-500'>
         {new Date(inv.due_date).toLocaleDateString('en-LK')}
       </TableCell>
+
       <TableCell>
         <Button variant='ghost' size='icon' className='h-8 w-8' onClick={() => openPreview(inv)}>
           <Eye className='h-4 w-4 text-zinc-400' />
