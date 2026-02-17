@@ -14,6 +14,7 @@ import { Button } from '~/components/ui/button';
 import { NavLink, useLocation } from 'react-router';
 import { Separator } from '~/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '~/components/ui/tooltip';
+import { useUiStore } from '~/store/ui-store';
 
 interface NavItem {
   label: string;
@@ -62,7 +63,8 @@ export function AppSidebar({
   onNavigate?: () => void;
 }) {
   const isMobile = variant === 'mobile';
-  const [collapsed, setCollapsed] = useState(false);
+  const collapsed = useUiStore((s) => s.sidebarCollapsed);
+  const setCollapsed = useUiStore((s) => s.setSidebarCollapsed);
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['Sales', 'Inventory']);
   const location = useLocation();
 

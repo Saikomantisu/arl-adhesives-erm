@@ -6,6 +6,7 @@ import { useUiStore } from '~/store/ui-store';
 export default function DashboardLayout() {
   const mobileNavOpen = useUiStore((s) => s.mobileNavOpen);
   const setMobileNavOpen = useUiStore((s) => s.setMobileNavOpen);
+  const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
 
   return (
     <div className='flex min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950'>
@@ -28,7 +29,13 @@ export default function DashboardLayout() {
         The sidebar animates, but content stays offset.
         Framer Motion on sidebar handles the visual transition.
       */}
-      <main className='min-w-0 flex-1 ml-0 md:ml-64'>
+      <main
+        className={
+          sidebarCollapsed
+            ? 'min-w-0 flex-1 ml-0 md:ml-16 transition-[margin] duration-200 ease-out'
+            : 'min-w-0 flex-1 ml-0 md:ml-64 transition-[margin] duration-200 ease-out'
+        }
+      >
         <Outlet />
       </main>
     </div>

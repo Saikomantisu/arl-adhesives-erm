@@ -5,6 +5,9 @@ interface UiState {
   setMobileNavOpen: (open: boolean) => void;
   openMobileNav: () => void;
   closeMobileNav: () => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebarCollapsed: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -12,5 +15,7 @@ export const useUiStore = create<UiState>((set) => ({
   setMobileNavOpen: (open) => set({ mobileNavOpen: open }),
   openMobileNav: () => set({ mobileNavOpen: true }),
   closeMobileNav: () => set({ mobileNavOpen: false }),
+  sidebarCollapsed: false,
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+  toggleSidebarCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 }));
-

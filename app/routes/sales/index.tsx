@@ -40,7 +40,7 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Invoices | ARL Adhesives' }];
 };
 
-function MobileInvoiceRow({
+function InvoiceRow({
   inv,
   openPreview,
 }: {
@@ -48,7 +48,7 @@ function MobileInvoiceRow({
   openPreview: (inv: Invoice) => void;
 }) {
   const [status, setStatus] = useState<InvoiceStatusOption>(
-    (inv.status as InvoiceStatusOption) ?? 'pending'
+    (inv.status as InvoiceStatusOption) ?? 'pending',
   );
   const { data: customer } = useQuery({
     queryKey: ['customers', inv.customer_id],
@@ -56,80 +56,68 @@ function MobileInvoiceRow({
     enabled: !!inv.customer_id,
   });
 
-  return (
-    <div className='p-4'>
-      <div className='flex items-start justify-between gap-3'>
-        <div className='min-w-0 flex-1'>
-          <p className='truncate text-sm font-medium text-zinc-900 dark:text-zinc-50'>
-            {inv.number}
-          </p>
-
-          <p className='mt-1 truncate text-xs text-zinc-500'>{customer?.company}</p>
-
-          {inv.po_number && <p className='mt-1 text-xs text-zinc-500'>PO: {inv.po_number}</p>}
-          <p className='mt-1 text-xs text-zinc-500'>
-            Due {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-UK') : '-'}
-          </p>
-        </div>
-
-        <div className='shrink-0 text-right'>
-          <p className='text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
-            {formatCurrency(inv.total)}
-          </p>
-          <div className='mt-1 flex justify-end'>
-            <Select value={status} onValueChange={(value) => setStatus(value as InvoiceStatusOption)}>
-              <SelectTrigger size='sm' className='h-7 px-2 text-xs'>
-                <SelectValue className='capitalize text-xs' />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <StatusBadge status={option.value} />
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      <div className='mt-3 flex justify-end'>
-        <Button variant='ghost' size='sm' onClick={() => openPreview(inv)}>
-          <Eye className='mr-2 h-4 w-4 text-zinc-400' />
-          Preview
-        </Button>
-      </div>
-    </div>
+  const renderStatusSelect = () => (
+    <Select value={status} onValueChange={(value) => setStatus(value as InvoiceStatusOption)}>
+      <SelectTrigger size='sm' className='h-7 px-2 text-xs'>
+        <SelectValue className='capitalize text-xs' />
+      </SelectTrigger>
+      <SelectContent>
+        {statusOptions.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            <StatusBadge status={option.value} />
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
-}
 
-function DesktopInvoiceRow({
-  inv,
-  openPreview,
-}: {
-  inv: Invoice;
-  openPreview: (inv: Invoice) => void;
-}) {
-  const [status, setStatus] = useState<InvoiceStatusOption>(
-    (inv.status as InvoiceStatusOption) ?? 'pending'
-  );
-  const { data: customer } = useQuery({
-    queryKey: ['customers', inv.customer_id],
-    queryFn: () => fetchCustomerById(inv.customer_id),
-    enabled: !!inv.customer_id,
-  });
+  const renderPreviewButton = (size: 'sm' | 'icon') =>
+    size === 'icon' ? (
+      <Button variant='ghost' size='icon' className='h-8 w-8' onClick={() => openPreview(inv)}>
+        <Eye className='h-4 w-4 text-zinc-400' />
+      </Button>
+    ) : (
+      <Button variant='ghost' size='sm' onClick={() => openPreview(inv)}>
+        <Eye className='mr-2 h-4 w-4 text-zinc-400' />
+        Preview
+      </Button>
+    );
 
   return (
     <TableRow>
-      <TableCell>
-        <span className='text-sm font-medium text-zinc-900 dark:text-zinc-50'>{inv.number}</span>
+      <TableCell className='md:hidden'>
+        <div className='flex items-start justify-between gap-3'>
+          <div className='min-w-0 flex-1'>
+            <p className='truncate text-sm font-medium text-zinc-900 dark:text-zinc-50'>
+              {inv.number}
+            </p>
+            <p className='mt-1 truncate text-xs text-zinc-500'>{customer?.company}</p>
+            {inv.po_number && <p className='mt-1 text-xs text-zinc-500'>PO: {inv.po_number}</p>}
+            <p className='mt-1 text-xs text-zinc-500'>
+              Due {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-UK') : '-'}
+            </p>
+          </div>
+          <div className='shrink-0 text-right'>
+            <p className='text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
+              {formatCurrency(inv.total)}
+            </p>
+            <div className='mt-1 flex justify-end'>{renderStatusSelect()}</div>
+          </div>
+        </div>
+        <div className='mt-3 flex justify-end'>{renderPreviewButton('sm')}</div>
       </TableCell>
 
       <TableCell>
+        <span className='hidden text-sm font-medium text-zinc-900 dark:text-zinc-50 md:inline'>
+          {inv.number}
+        </span>
+      </TableCell>
+
+      <TableCell className='hidden md:table-cell'>
         <span className='text-sm text-zinc-500'>{inv.po_number || '-'}</span>
       </TableCell>
 
-      <TableCell>
+      <TableCell className='hidden md:table-cell'>
         <div className='flex items-center gap-2'>
           <div className='flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'>
             {customer?.avatar}
@@ -140,33 +128,20 @@ function DesktopInvoiceRow({
         </div>
       </TableCell>
 
-      <TableCell className='text-right text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
+      <TableCell className='hidden text-right text-sm font-semibold text-zinc-900 dark:text-zinc-50 md:table-cell'>
         {formatCurrency(inv.total)}
       </TableCell>
 
-      <TableCell>
-        <Select value={status} onValueChange={(value) => setStatus(value as InvoiceStatusOption)}>
-          <SelectTrigger size='sm' className='h-7 px-2 text-xs'>
-            <SelectValue className='capitalize text-xs' />
-          </SelectTrigger>
-          <SelectContent>
-            {statusOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                <StatusBadge status={option.value} />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <TableCell className='hidden md:table-cell'>
+        {renderStatusSelect()}
       </TableCell>
 
-      <TableCell className='text-sm text-zinc-500'>
+      <TableCell className='hidden text-sm text-zinc-500 md:table-cell'>
         {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-UK') : '-'}
       </TableCell>
 
-      <TableCell>
-        <Button variant='ghost' size='icon' className='h-8 w-8' onClick={() => openPreview(inv)}>
-          <Eye className='h-4 w-4 text-zinc-400' />
-        </Button>
+      <TableCell className='hidden md:table-cell'>
+        {renderPreviewButton('icon')}
       </TableCell>
     </TableRow>
   );
@@ -246,34 +221,24 @@ export default function SalesIndexPage() {
                 </Button>
               </div>
 
-              {/* Mobile cards */}
-              <div className='md:hidden divide-y divide-zinc-100 dark:divide-zinc-800'>
-                {data.map((inv) => (
-                  <MobileInvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
-                ))}
-              </div>
-
-              {/* Desktop table */}
-              <div className='hidden md:block'>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice</TableHead>
-                      <TableHead>PO Number</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead className='text-right'>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead className='w-12' />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map((inv) => (
-                      <DesktopInvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <Table>
+                <TableHeader className='hidden md:table-header-group'>
+                  <TableRow>
+                    <TableHead>Invoice</TableHead>
+                    <TableHead>PO Number</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className='text-right'>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead className='w-12' />
+                  </TableRow>
+                </TableHeader>
+                <TableBody className='divide-y divide-zinc-100 dark:divide-zinc-800 md:divide-y-0'>
+                  {data.map((inv) => (
+                    <InvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
+                  ))}
+                </TableBody>
+              </Table>
             </Card>
           </motion.div>
         )}
