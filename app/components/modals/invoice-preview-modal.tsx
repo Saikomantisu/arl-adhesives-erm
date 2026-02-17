@@ -1,11 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog';
 import { Button } from '~/components/ui/button';
-import { Printer, ArrowLeft } from 'lucide-react';
+import { Printer, ArrowLeft, FileText } from 'lucide-react';
 import { invoiceFormatCurrency, type Invoice } from '~/lib/data';
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchInvoiceItems } from '~/services/invoice-service';
 import { fetchCustomerById } from '~/services/customer-service';
+import { fetchAodByInvoiceId, generateAod } from '~/services/aod-service';
+import { buildAodHtml } from '~/lib/print/aod-template';
 
 interface InvoicePreviewModalProps {
   invoice: Invoice | null;
@@ -26,6 +28,21 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
     queryKey: ['customers', invoice.customer_id],
     queryFn: () => fetchCustomerById(invoice.customer_id),
     enabled: !!invoice.customer_id,
+  });
+
+  const { data: aod } = useQuery({
+    queryKey: ['aod', invoice.id],
+    queryFn: () => fetchAodByInvoiceId(invoice.id!),
+    enabled: !!invoice.id,
+  });
+
+  const queryClient = useQueryClient();
+
+  const generateAodMutation = useMutation({
+    mutationFn: () => generateAod(invoice.id!),
+    onSuccess: (row) => {
+      queryClient.setQueryData(['aod', invoice.id], row);
+    },
   });
 
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -59,11 +76,7 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
     };
   }, [open, updateScale]);
 
-  // Iframe-based print: prints only the invoice, zero side-effects on the main page
-  const handlePrint = useCallback(() => {
-    const invoiceEl = invoiceRef.current;
-    if (!invoiceEl) return;
-
+  const printHtml = useCallback((bodyHtml: string, extraCss: string) => {
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.width = '0';
@@ -101,6 +114,29 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
     <style>
       @page { size: A4; margin: 0; }
       html, body { margin: 0; padding: 0; background: white; }
+      ${extraCss}
+    </style>
+  </head>
+  <body>${bodyHtml}</body>
+</html>`);
+    doc.close();
+
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        setTimeout(() => iframe.remove(), 1000);
+      }, 250);
+    };
+  }, []);
+
+  // Iframe-based print: prints only the invoice, zero side-effects on the main page
+  const handlePrint = useCallback(() => {
+    const invoiceEl = invoiceRef.current;
+    if (!invoiceEl) return;
+
+    printHtml(
+      invoiceEl.outerHTML,
+      `
       .invoice-page {
         width: 210mm;
         min-height: 297mm;
@@ -108,21 +144,18 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
         margin: 0 !important;
         padding: 10mm 15mm !important;
       }
-    </style>
-  </head>
-  <body>${invoiceEl.outerHTML}</body>
-</html>`);
-    doc.close();
+      `,
+    );
+  }, [printHtml]);
 
-    // Wait for stylesheets to load, then print
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        // Clean up after print dialog closes
-        setTimeout(() => iframe.remove(), 1000);
-      }, 250);
-    };
-  }, []);
+  const handlePrintAod = useCallback(async () => {
+    if (!invoice.id) return;
+
+    const row = aod ?? (await generateAodMutation.mutateAsync());
+    const { html, extraCss } = buildAodHtml({ aod: row, invoice, customer, items });
+
+    printHtml(html, extraCss);
+  }, [aod, customer, generateAodMutation, invoice, items, printHtml]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -154,6 +187,18 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
             <Button onClick={handlePrint} variant='outline' size='sm' className='h-8 gap-1.5'>
               <Printer className='h-3.5 w-3.5' />
               <span className='hidden sm:inline'>Print</span>
+            </Button>
+
+            <Button
+              onClick={handlePrintAod}
+              variant='outline'
+              size='sm'
+              className='h-8 gap-1.5'
+              disabled={!invoice.id || generateAodMutation.isPending}
+            >
+              <FileText className='h-3.5 w-3.5' />
+              <span className='hidden sm:inline'>{aod ? 'Print AOD' : 'Generate & Print AOD'}</span>
+              <span className='sm:hidden'>{aod ? 'AOD' : 'Gen AOD'}</span>
             </Button>
 
             {/* Desktop close button */}
@@ -240,7 +285,7 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
                       <tr>
                         <td className='font-bold pr-2 py-0.5 whitespace-nowrap'>Date</td>
                         <td>
-                          {new Date(invoice.created_at).toLocaleDateString('en-LK', {
+                          {new Date(invoice.created_at!).toLocaleDateString('en-UK', {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
@@ -253,7 +298,7 @@ export function InvoicePreviewModal({ invoice, open, onOpenChange }: InvoicePrev
                       </tr>
                       <tr>
                         <td className='font-bold pr-2 py-0.5 whitespace-nowrap'>A.O.D. No</td>
-                        <td>: ARL/AOD-26/01/6</td>
+                        <td>: {aod?.aod_number ?? '—'}</td>
                       </tr>
                     </tbody>
                   </table>

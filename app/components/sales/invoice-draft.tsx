@@ -13,10 +13,17 @@ import { useSaleStore } from '~/store/sales-store';
 import { Separator } from '~/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchCustomerById, fetchCustomers } from '~/services/customer-service';
-import { Trash2, Minus, Plus, AlertTriangle } from 'lucide-react';
-import { formatCurrency, getCustomer } from '~/lib/data';
+import { Trash2, Minus, Plus, AlertTriangle, Loader2 } from 'lucide-react';
+import { formatCurrency } from '~/lib/data';
+import { generateInvoice } from '~/services/invoice-service';
+import { useNavigate } from 'react-router';
+import { useState } from 'react';
 
 export function InvoiceDraft() {
+  const navigate = useNavigate();
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+  const [createInvoiceError, setCreateInvoiceError] = useState<string | null>(null);
+
   const {
     customer_id,
     items,
@@ -41,6 +48,36 @@ export function InvoiceDraft() {
     queryFn: () => fetchCustomerById(customer_id!),
     enabled: !!customer_id,
   });
+
+  const handleInvoiceCreate = async () => {
+    if (!customer_id || !po_number) return;
+    if (isCreatingInvoice) return;
+
+    try {
+      setCreateInvoiceError(null);
+      setIsCreatingInvoice(true);
+
+      await generateInvoice(
+        {
+          customer_id,
+          po_number,
+          subtotal: subtotal(),
+          tax: tax(),
+          total: total(),
+        },
+        items,
+      );
+
+      clearSale();
+      navigate('/sales');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Something went wrong while creating the invoice.';
+      setCreateInvoiceError(message);
+    } finally {
+      setIsCreatingInvoice(false);
+    }
+  };
 
   const isOverdue = selectedCustomer?.status === 'overdue';
 
@@ -109,9 +146,13 @@ export function InvoiceDraft() {
           PO Number
         </label>
         <Input
-          placeholder='Optional PO number…'
+          placeholder='PO number…'
+          required
           value={po_number}
-          onChange={(e) => setPoNumber(e.target.value)}
+          onChange={(e) => {
+            setPoNumber(e.target.value);
+            if (createInvoiceError) setCreateInvoiceError(null);
+          }}
           className='h-9 text-sm'
         />
       </div>
@@ -224,8 +265,42 @@ export function InvoiceDraft() {
             </span>
           </div>
 
-          <Button className='mt-2 w-full bg-indigo-600 hover:bg-indigo-700' disabled={!customer_id}>
-            Create Invoice
+          <AnimatePresence>
+            {createInvoiceError && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm
+                  text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300'
+                role='alert'
+              >
+                <div className='flex items-start gap-2'>
+                  <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0' />
+                  <div className='min-w-0'>
+                    <p className='text-xs font-semibold uppercase tracking-wide'>
+                      Couldn’t create invoice
+                    </p>
+                    <p className='mt-0.5 text-xs leading-relaxed'>{createInvoiceError}</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <Button
+            className='mt-2 w-full bg-indigo-600 hover:bg-indigo-700'
+            onClick={handleInvoiceCreate}
+            disabled={!customer_id || !po_number || isCreatingInvoice}
+          >
+            {isCreatingInvoice ? (
+              <>
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                Creating…
+              </>
+            ) : (
+              'Create Invoice'
+            )}
           </Button>
           {!customer_id && (
             <p className='text-center text-xs text-zinc-400'>Select a customer to finalize</p>

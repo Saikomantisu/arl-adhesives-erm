@@ -17,9 +17,24 @@ import { Link, type MetaFunction } from 'react-router';
 import { fetchInvoices } from '~/services/invoice-service';
 import { StatusBadge } from '~/components/shared/status-badge';
 import { SalesEmptyState } from '~/components/shared/empty-state';
-import { formatCurrency, getCustomer, type Invoice } from '~/lib/data';
+import { formatCurrency, type Invoice } from '~/lib/data';
 import { InvoicePreviewModal } from '~/components/modals/invoice-preview-modal';
 import { fetchCustomerById } from '~/services/customer-service';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select';
+
+const statusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'overdue', label: 'Overdue' },
+] as const;
+
+type InvoiceStatusOption = (typeof statusOptions)[number]['value'];
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Invoices | ARL Adhesives' }];
@@ -32,6 +47,9 @@ function MobileInvoiceRow({
   inv: Invoice;
   openPreview: (inv: Invoice) => void;
 }) {
+  const [status, setStatus] = useState<InvoiceStatusOption>(
+    (inv.status as InvoiceStatusOption) ?? 'pending'
+  );
   const { data: customer } = useQuery({
     queryKey: ['customers', inv.customer_id],
     queryFn: () => fetchCustomerById(inv.customer_id),
@@ -48,11 +66,9 @@ function MobileInvoiceRow({
 
           <p className='mt-1 truncate text-xs text-zinc-500'>{customer?.company}</p>
 
-          {inv.po_number && (
-            <p className='mt-1 text-xs text-zinc-500'>PO: {inv.po_number}</p>
-          )}
+          {inv.po_number && <p className='mt-1 text-xs text-zinc-500'>PO: {inv.po_number}</p>}
           <p className='mt-1 text-xs text-zinc-500'>
-            Due {new Date(inv.due_date).toLocaleDateString('en-LK')}
+            Due {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-UK') : '-'}
           </p>
         </div>
 
@@ -61,7 +77,18 @@ function MobileInvoiceRow({
             {formatCurrency(inv.total)}
           </p>
           <div className='mt-1 flex justify-end'>
-            <StatusBadge status={inv.status} />
+            <Select value={status} onValueChange={(value) => setStatus(value as InvoiceStatusOption)}>
+              <SelectTrigger size='sm' className='h-7 px-2 text-xs'>
+                <SelectValue className='capitalize text-xs' />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <StatusBadge status={option.value} />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -83,6 +110,9 @@ function DesktopInvoiceRow({
   inv: Invoice;
   openPreview: (inv: Invoice) => void;
 }) {
+  const [status, setStatus] = useState<InvoiceStatusOption>(
+    (inv.status as InvoiceStatusOption) ?? 'pending'
+  );
   const { data: customer } = useQuery({
     queryKey: ['customers', inv.customer_id],
     queryFn: () => fetchCustomerById(inv.customer_id),
@@ -115,11 +145,22 @@ function DesktopInvoiceRow({
       </TableCell>
 
       <TableCell>
-        <StatusBadge status={inv.status} />
+        <Select value={status} onValueChange={(value) => setStatus(value as InvoiceStatusOption)}>
+          <SelectTrigger size='sm' className='h-7 px-2 text-xs'>
+            <SelectValue className='capitalize text-xs' />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                <StatusBadge status={option.value} />
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </TableCell>
 
       <TableCell className='text-sm text-zinc-500'>
-        {new Date(inv.due_date).toLocaleDateString('en-LK')}
+        {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-UK') : '-'}
       </TableCell>
 
       <TableCell>

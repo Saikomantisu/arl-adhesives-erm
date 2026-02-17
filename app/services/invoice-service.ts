@@ -56,9 +56,7 @@ export const fetchDueInvoices = async (month?: Date): Promise<Invoice[]> => {
 };
 
 export const fetchInvoiceItems = async (invoice_id: string | undefined): Promise<InvoiceItem[]> => {
-  if (!invoice_id) {
-    throw new Error('invoice_id is required');
-  }
+  if (!invoice_id) throw new Error('invoice_id is required');
 
   try {
     const { data, error } = await supabase
@@ -76,5 +74,41 @@ export const fetchInvoiceItems = async (invoice_id: string | undefined): Promise
   } catch (err) {
     console.error('Unexpected error in fetchInvoiceItems:', err);
     throw err instanceof Error ? err : new Error('Unknown error while fetching invoice items');
+  }
+};
+
+export const generateInvoice = async (
+  invoice: Invoice,
+  invoice_items: InvoiceItem[],
+): Promise<Invoice> => {
+  if (!invoice) throw new Error('Invoice data is required');
+  if (!invoice_items) throw new Error('Invoice Items are required');
+
+  console.log(invoice_items);
+
+  try {
+    if (!invoice.customer_id) throw new Error('customer_id is required');
+    if (!invoice.po_number) throw new Error('po_number is required');
+
+    const { data: insertedInvoice, error: invoiceError } = await supabase.rpc('generate_invoice', {
+      p_customer_id: invoice.customer_id,
+      p_po_number: invoice.po_number,
+      p_subtotal: invoice.subtotal,
+      p_tax: invoice.tax,
+      p_total: invoice.total,
+      p_items: invoice_items,
+    });
+
+    if (invoiceError) {
+      console.error('Supabase generateInvoice rpc error:', invoiceError);
+      throw new Error(`Failed to create Invoice: ${invoiceError?.message}`);
+    }
+
+    if (!insertedInvoice) throw new Error('Invoice creation returned no data');
+
+    return insertedInvoice as Invoice;
+  } catch (error) {
+    console.error('Unexpected error in generateInvoice:', error);
+    throw error instanceof Error ? error : new Error('Unknown error while generating invoice');
   }
 };
