@@ -6,20 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Eye, Plus } from 'lucide-react';
-import { Card } from '~/components/ui/card';
-import { Button } from '~/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
-import { TopBar } from '~/components/layouts/top-bar';
-import { Link, type MetaFunction } from 'react-router';
-import { fetchInvoices } from '~/services/invoice-service';
-import { StatusBadge } from '~/components/shared/status-badge';
-import { SalesEmptyState } from '~/components/shared/empty-state';
-import { formatCurrency, type Invoice } from '~/lib/data';
-import { InvoicePreviewModal } from '~/components/modals/invoice-preview-modal';
-import { fetchCustomerById } from '~/services/customer-service';
 import {
   Select,
   SelectContent,
@@ -27,6 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Eye, Plus } from 'lucide-react';
+import { Card } from '~/components/ui/card';
+import { Button } from '~/components/ui/button';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { TopBar } from '~/components/layouts/top-bar';
+import { Link, type MetaFunction } from 'react-router';
+import { fetchInvoices, updateInvoiceStatus } from '~/services/invoice-service';
+import { StatusBadge } from '~/components/shared/status-badge';
+import { SalesEmptyState } from '~/components/shared/empty-state';
+import { formatCurrency, type Invoice, type InvoiceStatus } from '~/lib/data';
+import { InvoicePreviewModal } from '~/components/modals/invoice-preview-modal';
+import { fetchCustomerById } from '~/services/customer-service';
 
 const statusOptions = [
   { value: 'pending', label: 'Pending' },
@@ -34,33 +34,63 @@ const statusOptions = [
   { value: 'overdue', label: 'Overdue' },
 ] as const;
 
-type InvoiceStatusOption = (typeof statusOptions)[number]['value'];
-
 export const meta: MetaFunction = () => {
   return [{ title: 'Invoices | ARL Adhesives' }];
 };
 
-function InvoiceRow({
-  inv,
-  openPreview,
-}: {
-  inv: Invoice;
-  openPreview: (inv: Invoice) => void;
-}) {
-  const [status, setStatus] = useState<InvoiceStatusOption>(
-    (inv.status as InvoiceStatusOption) ?? 'pending',
-  );
+function InvoiceRow({ inv, openPreview }: { inv: Invoice; openPreview: (inv: Invoice) => void }) {
+  const [status, setStatus] = useState<InvoiceStatus>((inv.status as InvoiceStatus) ?? 'pending');
+  const statusUpdateLockedRef = useRef(false);
+
   const { data: customer } = useQuery({
     queryKey: ['customers', inv.customer_id],
     queryFn: () => fetchCustomerById(inv.customer_id),
     enabled: !!inv.customer_id,
   });
 
+  const queryClient = useQueryClient();
+
+  const updateStatusMutation = useMutation({
+    mutationFn: (nextStatus: InvoiceStatus) => updateInvoiceStatus(inv.id!, nextStatus),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+    onError: () => {
+      setStatus((inv.status as InvoiceStatus) ?? 'pending');
+    },
+    onSettled: () => {
+      statusUpdateLockedRef.current = false;
+    },
+  });
+
+  useEffect(() => {
+    setStatus((inv.status as InvoiceStatus) ?? 'pending');
+  }, [inv.status]);
+
+  const handleValueChange = (value: string | null) => {
+    if (!value) return;
+    if (statusUpdateLockedRef.current || updateStatusMutation.isPending) return;
+
+    const nextStatus = value as InvoiceStatus;
+    if (nextStatus === status) return;
+
+    setStatus(nextStatus);
+    if (!inv.id) return;
+
+    statusUpdateLockedRef.current = true;
+    updateStatusMutation.mutate(nextStatus);
+  };
+
   const renderStatusSelect = () => (
-    <Select value={status} onValueChange={(value) => setStatus(value as InvoiceStatusOption)}>
+    <Select
+      value={status}
+      onValueChange={(value) => handleValueChange(value)}
+      disabled={updateStatusMutation.isPending}
+    >
       <SelectTrigger size='sm' className='h-7 px-2 text-xs'>
         <SelectValue className='capitalize text-xs' />
       </SelectTrigger>
+
       <SelectContent>
         {statusOptions.map((option) => (
           <SelectItem key={option.value} value={option.value}>
@@ -92,11 +122,14 @@ function InvoiceRow({
               {inv.number}
             </p>
             <p className='mt-1 truncate text-xs text-zinc-500'>{customer?.company}</p>
-            {inv.po_number && <p className='mt-1 text-xs text-zinc-500'>PO: {inv.po_number}</p>}
+
+            <p className='mt-1 text-xs text-zinc-500'>PO: {inv.po_number}</p>
+
             <p className='mt-1 text-xs text-zinc-500'>
               Due {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-UK') : '-'}
             </p>
           </div>
+
           <div className='shrink-0 text-right'>
             <p className='text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
               {formatCurrency(inv.total)}
@@ -104,6 +137,7 @@ function InvoiceRow({
             <div className='mt-1 flex justify-end'>{renderStatusSelect()}</div>
           </div>
         </div>
+
         <div className='mt-3 flex justify-end'>{renderPreviewButton('sm')}</div>
       </TableCell>
 
@@ -132,17 +166,13 @@ function InvoiceRow({
         {formatCurrency(inv.total)}
       </TableCell>
 
-      <TableCell className='hidden md:table-cell'>
-        {renderStatusSelect()}
-      </TableCell>
+      <TableCell className='hidden md:table-cell'>{renderStatusSelect()}</TableCell>
 
       <TableCell className='hidden text-sm text-zinc-500 md:table-cell'>
         {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-UK') : '-'}
       </TableCell>
 
-      <TableCell className='hidden md:table-cell'>
-        {renderPreviewButton('icon')}
-      </TableCell>
+      <TableCell className='hidden md:table-cell'>{renderPreviewButton('icon')}</TableCell>
     </TableRow>
   );
 }

@@ -1,5 +1,5 @@
 import { supabase } from '~/lib/supabase';
-import type { Invoice, InvoiceItem } from '~/lib/data';
+import type { Invoice, InvoiceItem, InvoiceStatus } from '~/lib/data';
 
 export const fetchInvoices = async (month?: Date): Promise<Invoice[]> => {
   try {
@@ -111,4 +111,28 @@ export const generateInvoice = async (
     console.error('Unexpected error in generateInvoice:', error);
     throw error instanceof Error ? error : new Error('Unknown error while generating invoice');
   }
+};
+
+export const updateInvoiceStatus = async (
+  invoice_id: string,
+  new_status: InvoiceStatus,
+): Promise<Invoice> => {
+  if (!invoice_id) throw new Error('invoice_id is required');
+  if (!new_status) throw new Error('new_status is required');
+
+  const { data: updated, error } = await supabase
+    .from('invoices')
+    .update({ status: new_status })
+    .eq('id', invoice_id)
+    .select('*')
+    .single();
+
+  if (!updated) throw new Error('Status update returned no data');
+
+  if (error) {
+    console.error('Supabase updateInvoiceStatus error:', error);
+    throw new Error(`Failed to update invoice status: ${error.message}`);
+  }
+
+  return updated;
 };
