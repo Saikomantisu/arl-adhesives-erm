@@ -1,5 +1,6 @@
 import { supabase } from '~/lib/supabase';
 import type { Aod } from '~/lib/data';
+import { createActivity } from '~/services/activity-service';
 
 export const fetchAodByInvoiceId = async (invoice_id: string): Promise<Aod | null> => {
   if (!invoice_id) throw new Error('invoice_id is required');
@@ -71,17 +72,12 @@ export const generateAod = async (invoice_id: string): Promise<Aod> => {
 
     if (!inserted) throw new Error('AOD creation returned no data');
 
-    const { error: activityError } = await supabase.from('activities').insert({
+    await createActivity({
       customer_id: invoiceRow.customer_id,
       type: 'aod_generated',
       description: `AOD generated for invoice ${invoiceRow.number}`,
       ref_number: inserted.aod_number,
     });
-
-    if (activityError) {
-      console.error('Supabase generateAod insert error:', activityError);
-      throw new Error(`Failed to add a new activity: ${activityError.message}`);
-    }
 
     return inserted as Aod;
   } catch (err) {

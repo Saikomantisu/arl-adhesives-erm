@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Eye, Plus } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, Eye, Plus } from 'lucide-react';
 import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -185,9 +185,14 @@ export default function SalesIndexPage() {
 
   const [previewInvoiceId, setPreviewInvoiceId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [paidExpanded, setPaidExpanded] = useState(false);
 
   const showEmpty = false;
   const data = showEmpty ? [] : (invoiceRows ?? []);
+
+  // Separate invoices into active (pending/overdue) and paid
+  const activeInvoices = data.filter((inv) => inv.status !== 'paid');
+  const paidInvoices = data.filter((inv) => inv.status === 'paid');
 
   const previewInvoice = previewInvoiceId
     ? (invoiceRows!.find((i) => i.id === previewInvoiceId) ?? null)
@@ -241,7 +246,9 @@ export default function SalesIndexPage() {
                   <h2 className='text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
                     Invoices
                   </h2>
-                  <p className='text-xs text-zinc-500'>{data.length} total</p>
+                  <p className='text-xs text-zinc-500'>
+                    {activeInvoices.length} active{paidInvoices.length > 0 && `, ${paidInvoices.length} paid`}
+                  </p>
                 </div>
                 <Button size='sm' className='w-full bg-indigo-600 hover:bg-indigo-700 sm:w-auto'>
                   <Link to='/sales/new' className='flex items-center'>
@@ -251,24 +258,81 @@ export default function SalesIndexPage() {
                 </Button>
               </div>
 
-              <Table>
-                <TableHeader className='hidden md:table-header-group'>
-                  <TableRow>
-                    <TableHead>Invoice</TableHead>
-                    <TableHead>PO Number</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className='text-right'>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead className='w-12' />
-                  </TableRow>
-                </TableHeader>
-                <TableBody className='divide-y divide-zinc-100 dark:divide-zinc-800 md:divide-y-0'>
-                  {data.map((inv) => (
-                    <InvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
-                  ))}
-                </TableBody>
-              </Table>
+              {/* Active Invoices Table */}
+              {activeInvoices.length > 0 ? (
+                <Table>
+                  <TableHeader className='hidden md:table-header-group'>
+                    <TableRow>
+                      <TableHead>Invoice</TableHead>
+                      <TableHead>PO Number</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead className='text-right'>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead className='w-12' />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className='divide-y divide-zinc-100 dark:divide-zinc-800 md:divide-y-0'>
+                    {activeInvoices.map((inv) => (
+                      <InvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className='p-6 text-center text-sm text-zinc-500'>
+                  No pending or overdue invoices
+                </div>
+              )}
+
+              {/* Collapsible Paid Invoices Section */}
+              {paidInvoices.length > 0 && (
+                <div className='border-t border-zinc-100 dark:border-zinc-800'>
+                  <button
+                    type='button'
+                    onClick={() => setPaidExpanded(!paidExpanded)}
+                    className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50'
+                  >
+                    <motion.div
+                      animate={{ rotate: paidExpanded ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className='h-4 w-4' />
+                    </motion.div>
+                    Paid Invoices ({paidInvoices.length})
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {paidExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className='overflow-hidden'
+                      >
+                        <Table>
+                          <TableHeader className='hidden md:table-header-group'>
+                            <TableRow>
+                              <TableHead>Invoice</TableHead>
+                              <TableHead>PO Number</TableHead>
+                              <TableHead>Customer</TableHead>
+                              <TableHead className='text-right'>Amount</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Due Date</TableHead>
+                              <TableHead className='w-12' />
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody className='divide-y divide-zinc-100 dark:divide-zinc-800 md:divide-y-0'>
+                            {paidInvoices.map((inv) => (
+                              <InvoiceRow key={inv.id} inv={inv} openPreview={openPreview} />
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </Card>
           </motion.div>
         )}

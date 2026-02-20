@@ -1,5 +1,6 @@
 import { supabase } from '~/lib/supabase';
-import type { Invoice, InvoiceItem, InvoiceStatus } from '~/lib/data';
+import type { Activity, Invoice, InvoiceItem, InvoiceStatus } from '~/lib/data';
+import { createActivity } from './activity-service';
 
 export const fetchInvoices = async (month?: Date): Promise<Invoice[]> => {
   try {
@@ -120,6 +121,13 @@ export const updateInvoiceStatus = async (
   if (!invoice_id) throw new Error('invoice_id is required');
   if (!new_status) throw new Error('new_status is required');
 
+  const statusActivityMap: Record<InvoiceStatus, { type: Activity['type']; description: string }> =
+    {
+      pending: { type: 'invoice_pending', description: 'Invoice marked as pending' },
+      paid: { type: 'invoice_paid', description: 'Invoice marked as paid' },
+      overdue: { type: 'invoice_overdue', description: 'Invoice marked as overdue' },
+    };
+
   const { data: updated, error } = await supabase
     .from('invoices')
     .update({ status: new_status })
@@ -132,6 +140,17 @@ export const updateInvoiceStatus = async (
   if (error) {
     console.error('Supabase updateInvoiceStatus error:', error);
     throw new Error(`Failed to update invoice status: ${error.message}`);
+  }
+
+  const activity = statusActivityMap[new_status];
+
+  if (activity) {
+    await createActivity({
+      customer_id: updated.customer_id,
+      type: activity.type,
+      description: activity.description,
+      ref_number: updated.number,
+    });
   }
 
   return updated;
