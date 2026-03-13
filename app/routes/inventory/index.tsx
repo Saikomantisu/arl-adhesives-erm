@@ -10,13 +10,14 @@ import { cn } from '~/lib/utils';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '~/components/ui/card';
+import { formatCurrency } from '~/lib/data';
 import { Input } from '~/components/ui/input';
 import { Badge } from '~/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
-import { data, type MetaFunction } from 'react-router';
+import { type MetaFunction } from 'react-router';
+import type { Route } from '../inventory/+types';
 import { Search, AlertTriangle } from 'lucide-react';
 import { TopBar } from '~/components/layouts/top-bar';
-import { formatCurrency } from '~/lib/data';
 import { fetchProducts } from '~/services/product-service';
 import { Sparkline } from '~/components/shared/sparkline';
 
@@ -24,7 +25,12 @@ export const meta: MetaFunction = () => {
   return [{ title: 'All Products | ARL Adhesives' }];
 };
 
-export default function InventoryPage() {
+export async function loader() {
+  const products = await fetchProducts();
+  return { products };
+}
+
+export default function InventoryPage({ loaderData }: Route.ComponentProps) {
   const [search, setSearch] = useState('');
 
   const {
@@ -35,6 +41,7 @@ export default function InventoryPage() {
   } = useQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
+    initialData: loaderData.products,
   });
 
   const filtered = products.filter((p) => {
