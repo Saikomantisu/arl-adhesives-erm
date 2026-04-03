@@ -27,7 +27,7 @@ export function buildAodHtml({
   html: string;
   extraCss: string;
 } {
-  const printedDate = new Date(aod.printed_at).toLocaleDateString('en-UK', {
+  const printedDate = new Date(aod.printed_at).toLocaleDateString('en-GB', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -45,7 +45,7 @@ export function buildAodHtml({
           <td class="border border-black p-2 text-center h-[80px]"></td>
           <td class="border border-black p-2 h-[80px]">
             ${name}<br />
-            Make : Malayasia<br />
+            Make : Malaysia<br />
             Brand : Adtek
           </td>
           <td class="border border-black p-2 text-center h-[80px]">${qty}</td>
@@ -65,8 +65,8 @@ export function buildAodHtml({
   `;
 
   const html = `
-    <div class="w-[210mm] min-h-[297mm] bg-white text-black font-serif text-[14px] p-[15mm_20mm_10mm_20mm] shadow-sm flex flex-col">
-      <div class="flex-1">
+    <div class="w-[210mm] min-h-[297mm] bg-white text-black font-sans text-[14px] p-[15mm_20mm_10mm_20mm] shadow-sm flex flex-col">
+      <div class="flex-1 font-serif">
         <div class="mb-4">
           <div class="text-[26px] font-bold text-[#2a5f8f] underline leading-tight">ARL Adhesives</div>
           <div class="text-[13px] italic text-[#2a5f8f] leading-normal">
@@ -78,14 +78,14 @@ export function buildAodHtml({
 
         <div class="text-right italic text-sm mb-2">Customer Copy</div>
 
-        <div class="text-center text-2xl font-bold mb-8">ADVICE OF DISPATCH</div>
+        <div class="text-center text-2xl font-bold mb-8 font-serif">ADVICE OF DISPATCH</div>
 
         <div class="flex justify-between mb-8">
           <div class="max-w-[50%]">
             <div class="font-bold underline mb-1">Consignee:</div>
             <p class="leading-relaxed w-[200px]">
               ${escapeHtml(customer?.company)}<br />
-              ${customer?.address}
+              ${escapeHtml(customer?.address)}
             </p>
           </div>
 
@@ -135,12 +135,11 @@ export function buildAodHtml({
         </table>
 
         <div class="mt-8 text-[13px] leading-relaxed max-w-[90%]">
-          Any discrepancy on quality or quantity of goods received should be informed us within 24
-          hours of the delivery or it would be considered as correct and we shall not be liable for
-          same.
+          Any discrepancy in the quality or quantity of goods received must be reported within 24
+          hours of delivery. Otherwise, the delivery will be treated as accepted and correct.
         </div>
 
-        <div class="text-right mt-6 mb-4 text-sm">Good received are in order</div>
+        <div class="text-right mt-6 mb-4 text-sm">Goods received are in order</div>
 
         <div class="flex justify-between items-end mt-20 px-[5mm]">
           <div class="text-center">
@@ -158,7 +157,7 @@ export function buildAodHtml({
       <div class="mt-auto pt-6">
         <div class="h-1 bg-[#2a5f8f] mb-4"></div>
         <hr class="border-0 border-t-2 border-dashed border-black mb-4" />
-        <div class="text-center text-[11px] text-zinc-700">
+        <div class="text-center text-[12px] text-zinc-700">
           No. 3/6A, Edirigoda Road, Nugegoda. Tel. +94 777 766006, 777 767260 Email:
           arl.adhesives@gmail.com
         </div>

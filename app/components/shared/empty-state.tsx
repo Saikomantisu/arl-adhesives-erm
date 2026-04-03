@@ -3,7 +3,19 @@ import { Button } from '~/components/ui/button';
 import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 
-export function SalesEmptyState() {
+interface SalesEmptyStateProps {
+  title?: string;
+  description?: string;
+  href?: string;
+  actionLabel?: string;
+}
+
+export function SalesEmptyState({
+  title = 'No invoices yet',
+  description = 'Create your first sale to generate an invoice. Track payments, send reminders, and preview documents — all from here.',
+  href = '/sales/new',
+  actionLabel = 'Create First Sale',
+}: SalesEmptyStateProps) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -18,16 +30,15 @@ export function SalesEmptyState() {
         <FileText className="h-8 w-8 text-zinc-400" />
       </div>
       <h3 className="mt-5 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-        No invoices yet
+        {title}
       </h3>
       <p className="mt-1.5 max-w-sm text-center text-sm text-zinc-500 dark:text-zinc-400">
-        Create your first sale to generate an invoice. Track payments, send
-        reminders, and preview documents — all from here.
+        {description}
       </p>
-      <Link to="/sales/new">
+      <Link to={href}>
         <Button className="mt-6 bg-indigo-600 hover:bg-indigo-700">
           <Plus className="mr-2 h-4 w-4" />
-          Create First Sale
+          {actionLabel}
         </Button>
       </Link>
     </motion.div>

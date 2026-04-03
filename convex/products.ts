@@ -1,8 +1,8 @@
-import { queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
+import { query } from './_generated/server';
 import { getById, mapProduct } from './lib';
 
-export const list = queryGeneric({
+export const list = query({
   args: {},
   handler: async (ctx) => {
     const products = await ctx.db.query('products').order('desc').collect();
@@ -10,7 +10,7 @@ export const list = queryGeneric({
   },
 });
 
-export const get = queryGeneric({
+export const get = query({
   args: {
     productId: v.string(),
   },

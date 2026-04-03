@@ -66,6 +66,8 @@ export default function CustomerPulsePage() {
     convexQuery(convexApi.customers.get, customerId ? { customerId } : 'skip'),
   );
   const customer = (customerQuery.data ?? null) as Customer | null;
+  const customerLoading = customerId ? customerQuery.isLoading : false;
+  const customerError = customerQuery.error;
 
   const activitiesQuery = useQuery(
     convexQuery(
@@ -77,7 +79,23 @@ export default function CustomerPulsePage() {
   const activitiesLoading = activitiesQuery.isLoading;
   const activitiesIsError = activitiesQuery.isError;
 
-  if (!customer) {
+  if (customerLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-zinc-500">Loading customer…</p>
+      </div>
+    );
+  }
+
+  if (customerError) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-zinc-500">Unable to load customer.</p>
+      </div>
+    );
+  }
+
+  if (!customerId || !customer) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p className="text-zinc-500">Customer not found</p>
@@ -144,7 +162,7 @@ export default function CustomerPulsePage() {
                 </div>
                 <div className="flex items-start gap-3 text-sm">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
-                  <span className="min-w-0 flex-1 wrap-break-word text-zinc-700 dark:text-zinc-300">
+                  <span className="min-w-0 flex-1 break-words text-zinc-700 dark:text-zinc-300">
                     {customer.address}
                   </span>
                 </div>

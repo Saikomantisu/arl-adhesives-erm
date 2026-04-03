@@ -16,15 +16,13 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Dashboard | ARL Adhesives' }];
 };
 
-function PaymentDueRow({ inv }: { inv: Invoice }) {
-  const customerQuery = useQuery(
-    convexQuery(
-      convexApi.customers.get,
-      inv.customer_id ? { customerId: inv.customer_id } : 'skip',
-    ),
-  );
-  const customer = (customerQuery.data ?? null) as Customer | null;
-
+function PaymentDueRow({
+  inv,
+  customer,
+}: {
+  inv: Invoice;
+  customer: Customer | null;
+}) {
   return (
     <div key={inv.id} className="flex items-center justify-between px-5 py-4">
       <div className="flex items-center gap-3">
@@ -62,19 +60,30 @@ function PaymentDueRow({ inv }: { inv: Invoice }) {
 export default function HomePage() {
   const productsQuery = useQuery(convexQuery(convexApi.products.list, {}));
   const invoicesQuery = useQuery(convexQuery(convexApi.invoices.list, {}));
+  const customersQuery = useQuery(convexQuery(convexApi.customers.list, {}));
   const paymentsDueQuery = useQuery(
     convexQuery(convexApi.invoices.listDue, {}),
   );
 
   const products = (productsQuery.data ?? []) as Product[];
   const invoices = (invoicesQuery.data ?? []) as Invoice[];
+  const customers = (customersQuery.data ?? []) as Customer[];
   const paymentsDue = (paymentsDueQuery.data ?? []) as Invoice[];
+  const customersById = new Map(
+    customers.flatMap((customer) =>
+      customer.id ? [[customer.id, customer] as const] : [],
+    ),
+  );
 
   const error =
-    productsQuery.error || invoicesQuery.error || paymentsDueQuery.error;
+    productsQuery.error ||
+    invoicesQuery.error ||
+    customersQuery.error ||
+    paymentsDueQuery.error;
   const isLoading =
     productsQuery.isLoading ||
     invoicesQuery.isLoading ||
+    customersQuery.isLoading ||
     paymentsDueQuery.isLoading;
 
   const monthlyRevenue = invoices.reduce((sum, i) => sum + i.total, 0);
@@ -141,7 +150,11 @@ export default function HomePage() {
 
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {paymentsDue.map((inv) => (
-                <PaymentDueRow key={inv.id ?? inv.number} inv={inv} />
+                <PaymentDueRow
+                  key={inv.id ?? inv.number}
+                  inv={inv}
+                  customer={customersById.get(inv.customer_id) ?? null}
+                />
               ))}
             </div>
           </Card>

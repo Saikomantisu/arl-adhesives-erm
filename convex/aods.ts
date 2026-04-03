@@ -1,11 +1,13 @@
-import { mutationGeneric, queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
+import type { Id } from './_generated/dataModel';
+import type { MutationCtx } from './_generated/server';
+import { mutation, query } from './_generated/server';
 import { formatAodNumber, getById, mapAod, takeNextSequence } from './lib';
 
 const createActivityRecord = async (
-  ctx: { db: any },
+  ctx: MutationCtx,
   params: {
-    customerId: any;
+    customerId: Id<'customers'>;
     description: string;
     refNumber: string;
     timestamp: number;
@@ -21,7 +23,7 @@ const createActivityRecord = async (
   });
 };
 
-export const getByInvoice = queryGeneric({
+export const getByInvoice = query({
   args: {
     invoiceId: v.string(),
   },
@@ -38,7 +40,7 @@ export const getByInvoice = queryGeneric({
   },
 });
 
-export const createForInvoice = mutationGeneric({
+export const createForInvoice = mutation({
   args: {
     invoiceId: v.string(),
   },

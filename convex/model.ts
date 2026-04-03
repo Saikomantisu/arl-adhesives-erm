@@ -14,6 +14,7 @@ export const invoiceStatusValidator = v.union(
 
 export const numberingScopeValidator = v.union(
   v.literal('invoice'),
+  v.literal('quotation'),
   v.literal('aod'),
 );
 

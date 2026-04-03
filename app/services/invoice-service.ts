@@ -51,8 +51,6 @@ export const generateInvoice = async (
   if (!invoice) throw new Error('Invoice data is required');
   if (!invoice_items) throw new Error('Invoice Items are required');
 
-  console.log(invoice_items);
-
   try {
     if (!invoice.customer_id) throw new Error('customer_id is required');
     if (!invoice.po_number) throw new Error('po_number is required');

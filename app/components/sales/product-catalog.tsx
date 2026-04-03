@@ -6,14 +6,24 @@ import { Input } from '~/components/ui/input';
 import { Badge } from '~/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { convexQuery } from '@convex-dev/react-query';
-import { useSaleStore } from '~/store/sales-store';
 import { Search, Plus, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { convexApi } from '~/lib/convex';
+import type { SalesDraftStore } from '~/store/create-sales-draft-store';
 
-export function ProductCatalog() {
+interface ProductCatalogProps {
+  useDraftStore: SalesDraftStore;
+  documentLabel: string;
+  allowOutOfStockSelection?: boolean;
+}
+
+export function ProductCatalog({
+  useDraftStore,
+  documentLabel,
+  allowOutOfStockSelection = false,
+}: ProductCatalogProps) {
   const [search, setSearch] = useState('');
-  const addItem = useSaleStore((s) => s.addItem);
+  const addItem = useDraftStore((state) => state.addItem);
 
   const productsQuery = useQuery(convexQuery(convexApi.products.list, {}));
   const products = (productsQuery.data ?? []) as Product[];
@@ -25,7 +35,7 @@ export function ProductCatalog() {
   );
 
   const handleAdd = (product: Product) => {
-    if (product.current_stock_boxes === 0) return;
+    if (!allowOutOfStockSelection && product.current_stock_boxes === 0) return;
 
     const product_price = product.price_per_kg * product.package_weight_kg;
 
@@ -47,7 +57,7 @@ export function ProductCatalog() {
           Product Catalog
         </h2>
         <p className="text-xs text-zinc-500">
-          Click a product to add it to the invoice draft
+          Click a product to add it to the {documentLabel.toLowerCase()} draft
         </p>
       </div>
 
@@ -80,7 +90,7 @@ export function ProductCatalog() {
                 <Card
                   className={cn(
                     'group cursor-pointer p-4 transition-all',
-                    isOutOfStock
+                    isOutOfStock && !allowOutOfStockSelection
                       ? 'cursor-not-allowed opacity-50'
                       : 'hover:border-indigo-300 hover:shadow-sm dark:hover:border-indigo-700',
                   )}
