@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog';
 import { Button } from '~/components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import {
   type Customer,
   type Product,
@@ -16,7 +16,10 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { convexQuery } from '@convex-dev/react-query';
 import { convexApi } from '~/lib/convex';
-import { downloadElementAsPdf } from '~/lib/print/pdf';
+import {
+  formatPrintDocumentTitle,
+  printHtmlDocument,
+} from '~/lib/print/browser-print';
 import { QuotationDocument } from '~/components/documents/quotation-document';
 
 interface QuotationPreviewModalProps {
@@ -62,7 +65,6 @@ export function QuotationPreviewModal({
   const documentRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const updateScale = useCallback(() => {
     const wrapper = wrapperRef.current;
@@ -90,17 +92,24 @@ export function QuotationPreviewModal({
     };
   }, [open, updateScale]);
 
-  const handleDownload = useCallback(async () => {
+  const handlePrint = useCallback(() => {
     const element = documentRef.current;
-    if (!element || isDownloading) return;
+    if (!element) return;
 
-    try {
-      setIsDownloading(true);
-      await downloadElementAsPdf(element, `${quotation.number}.pdf`);
-    } finally {
-      setIsDownloading(false);
-    }
-  }, [isDownloading, quotation.number]);
+    printHtmlDocument({
+      bodyHtml: element.outerHTML,
+      title: formatPrintDocumentTitle('Quotation', quotation.number),
+      extraCss: `
+      .invoice-page {
+        width: 210mm;
+        min-height: 297mm;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 15mm 20mm !important;
+      }
+      `,
+    });
+  }, [quotation.number]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -128,17 +137,14 @@ export function QuotationPreviewModal({
 
           <div className="flex items-center gap-2">
             <Button
-              onClick={handleDownload}
+              onClick={handlePrint}
               variant="outline"
               size="sm"
               className="h-8 gap-1.5"
-              disabled={isDownloading}
             >
-              <Download className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">
-                {isDownloading ? 'Downloading...' : 'Download PDF'}
-              </span>
-              <span className="sm:hidden">PDF</span>
+              <Printer className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Print</span>
+              <span className="sm:hidden">Print</span>
             </Button>
 
             <button
