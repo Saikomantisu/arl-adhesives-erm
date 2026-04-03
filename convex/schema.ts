@@ -10,7 +10,6 @@ import {
 
 export default defineSchema({
   customers: defineTable({
-    legacyId: v.optional(v.string()),
     email: v.string(),
     phone: v.optional(v.string()),
     company: v.string(),
@@ -25,7 +24,6 @@ export default defineSchema({
   }).index('by_email', ['email']),
 
   products: defineTable({
-    legacyId: v.optional(v.string()),
     sku: v.string(),
     name: v.string(),
     threshold: v.number(),
@@ -38,14 +36,12 @@ export default defineSchema({
   }).index('by_sku', ['sku']),
 
   invoices: defineTable({
-    legacyId: v.optional(v.string()),
     number: v.string(),
     numberYear: v.optional(v.number()),
     numberMonth: v.optional(v.number()),
     numberSequence: v.optional(v.number()),
     numberingVersion: numberingVersionValidator,
     customerId: v.id('customers'),
-    customerExternalId: v.optional(v.string()),
     status: invoiceStatusValidator,
     createdAt: v.number(),
     dueDate: v.number(),
@@ -60,11 +56,8 @@ export default defineSchema({
     .index('by_status', ['status']),
 
   invoiceItems: defineTable({
-    legacyId: v.optional(v.string()),
     invoiceId: v.id('invoices'),
-    invoiceExternalId: v.optional(v.string()),
     productId: v.id('products'),
-    productExternalId: v.optional(v.string()),
     name: v.string(),
     quantity: v.number(),
     productPrice: v.number(),
@@ -75,9 +68,7 @@ export default defineSchema({
   }).index('by_invoice_id', ['invoiceId']),
 
   aods: defineTable({
-    legacyId: v.optional(v.string()),
     invoiceId: v.id('invoices'),
-    invoiceExternalId: v.optional(v.string()),
     aodNumber: v.string(),
     numberYear: v.optional(v.number()),
     numberMonth: v.optional(v.number()),
@@ -92,9 +83,7 @@ export default defineSchema({
     .index('by_aod_number', ['aodNumber']),
 
   activities: defineTable({
-    legacyId: v.optional(v.string()),
     customerId: v.id('customers'),
-    customerExternalId: v.optional(v.string()),
     type: activityTypeValidator,
     description: v.string(),
     refNumber: v.optional(v.string()),
