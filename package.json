@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
+    "build": "convex codegen && react-router build",
+    "convex:codegen": "convex codegen",
     "convex:dev": "convex dev",
     "dev": "react-router dev",
     "format": "prettier --write .",
