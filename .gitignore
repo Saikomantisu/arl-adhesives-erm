@@ -7,3 +7,6 @@
 /build/
 
 /supabase
+.env.local
+
+convex/_generated

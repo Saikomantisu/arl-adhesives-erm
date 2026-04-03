@@ -12,10 +12,18 @@ type AodTemplateArgs = {
   aod: Aod;
   invoice: Invoice;
   customer?: { company?: string | null; address?: string | null } | null;
-  items?: Array<{ name?: string | null; total_weight_kg?: number | string | null }> | null;
+  items?: Array<{
+    name?: string | null;
+    total_weight_kg?: number | string | null;
+  }> | null;
 };
 
-export function buildAodHtml({ aod, invoice, customer, items }: AodTemplateArgs): {
+export function buildAodHtml({
+  aod,
+  invoice,
+  customer,
+  items,
+}: AodTemplateArgs): {
   html: string;
   extraCss: string;
 } {

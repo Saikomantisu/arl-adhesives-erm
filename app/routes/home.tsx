@@ -8,47 +8,51 @@ import { formatCurrency } from '~/lib/data';
 import { motion } from 'framer-motion';
 import type { MetaFunction } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProducts } from '~/services/product-service';
-import { fetchDueInvoices, fetchInvoices } from '~/services/invoice-service';
-import { fetchCustomerById } from '~/services/customer-service';
-import type { Invoice } from '~/lib/data';
+import { convexQuery } from '@convex-dev/react-query';
+import { convexApi } from '~/lib/convex';
+import type { Customer, Invoice, Product } from '~/lib/data';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Dashboard | ARL Adhesives' }];
 };
 
 function PaymentDueRow({ inv }: { inv: Invoice }) {
-  const { data: customer } = useQuery({
-    queryKey: ['customers', inv.customer_id],
-    queryFn: () => fetchCustomerById(inv.customer_id),
-    enabled: !!inv.customer_id,
-  });
+  const customerQuery = useQuery(
+    convexQuery(
+      convexApi.customers.get,
+      inv.customer_id ? { customerId: inv.customer_id } : 'skip',
+    ),
+  );
+  const customer = (customerQuery.data ?? null) as Customer | null;
 
   return (
-    <div key={inv.id} className='flex items-center justify-between px-5 py-4'>
-      <div className='flex items-center gap-3'>
+    <div key={inv.id} className="flex items-center justify-between px-5 py-4">
+      <div className="flex items-center gap-3">
         <div
-          className='flex h-9 w-9 items-center justify-center
+          className="flex h-9 w-9 items-center justify-center
             rounded-full bg-zinc-100 text-xs font-semibold
-            text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
+            text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
         >
           {customer?.avatar}
         </div>
 
         <div>
-          <p className='text-sm font-medium text-zinc-900 dark:text-zinc-50'>{customer?.company}</p>
-          <p className='text-xs text-zinc-500'>
-            {inv.number} · Due {new Date(inv.due_date).toLocaleDateString()}
+          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            {customer?.company}
+          </p>
+          <p className="text-xs text-zinc-500">
+            {inv.number} · Due{' '}
+            {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '-'}
           </p>
         </div>
       </div>
 
-      <div className='flex items-center gap-3'>
-        <div className='text-right'>
-          <p className='text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
             {formatCurrency(inv.total)}
           </p>
-          <StatusBadge status={inv.status} />
+          <StatusBadge status={inv.status ?? 'pending'} />
         </div>
       </div>
     </div>
@@ -56,33 +60,28 @@ function PaymentDueRow({ inv }: { inv: Invoice }) {
 }
 
 export default function HomePage() {
-  const productsQuery = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchProducts,
-  });
+  const productsQuery = useQuery(convexQuery(convexApi.products.list, {}));
+  const invoicesQuery = useQuery(convexQuery(convexApi.invoices.list, {}));
+  const paymentsDueQuery = useQuery(
+    convexQuery(convexApi.invoices.listDue, {}),
+  );
 
-  const invoicesQuery = useQuery({
-    queryKey: ['invoices'],
-    queryFn: () => fetchInvoices(),
-  });
+  const products = (productsQuery.data ?? []) as Product[];
+  const invoices = (invoicesQuery.data ?? []) as Invoice[];
+  const paymentsDue = (paymentsDueQuery.data ?? []) as Invoice[];
 
-  const paymentsDueQuery = useQuery({
-    queryKey: ['due_invoices'],
-    queryFn: () => fetchDueInvoices(),
-  });
-
-  const products = productsQuery.data ?? [];
-  const invoices = invoicesQuery.data ?? [];
-  const paymentsDue = paymentsDueQuery.data ?? [];
-
-  const error = productsQuery.error || invoicesQuery.error || paymentsDueQuery.error;
+  const error =
+    productsQuery.error || invoicesQuery.error || paymentsDueQuery.error;
   const isLoading =
-    productsQuery.isLoading || invoicesQuery.isLoading || paymentsDueQuery.isLoading;
+    productsQuery.isLoading ||
+    invoicesQuery.isLoading ||
+    paymentsDueQuery.isLoading;
 
   const monthlyRevenue = invoices.reduce((sum, i) => sum + i.total, 0);
   const outstanding = paymentsDue.reduce((sum, i) => sum + i.total, 0);
   const stockValue = products.reduce(
-    (sum, p) => sum + p.price_per_kg * p.package_weight_kg * p.current_stock_boxes,
+    (sum, p) =>
+      sum + p.price_per_kg * p.package_weight_kg * p.current_stock_boxes,
     0,
   );
 
@@ -112,11 +111,11 @@ export default function HomePage() {
 
   return (
     <div>
-      <TopBar title='Dashboard' />
+      <TopBar title="Dashboard" />
 
-      <div className='space-y-6 p-4 sm:p-6'>
+      <div className="space-y-6 p-4 sm:p-6">
         {/* KPI Cards */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {kpis.map((kpi, i) => (
             <KpiCard key={kpi.label} {...kpi} index={i} />
           ))}
@@ -128,19 +127,19 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <Card className='gap-0 py-0'>
-            <div className='flex items-center justify-between p-5 pb-0'>
+          <Card className="gap-0 py-0">
+            <div className="flex items-center justify-between p-5 pb-0">
               <div>
-                <h2 className='text-sm font-semibold text-zinc-900 dark:text-zinc-50'>
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
                   Payments Due
                 </h2>
-                <p className='text-xs text-zinc-500'>{paymentsDueSummary}</p>
+                <p className="text-xs text-zinc-500">{paymentsDueSummary}</p>
               </div>
             </div>
 
-            <Separator className='mt-4' />
+            <Separator className="mt-4" />
 
-            <div className='divide-y divide-zinc-100 dark:divide-zinc-800'>
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {paymentsDue.map((inv) => (
                 <PaymentDueRow key={inv.id ?? inv.number} inv={inv} />
               ))}

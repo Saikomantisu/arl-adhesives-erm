@@ -13,9 +13,16 @@ const styles: Record<string, string> = {
   new: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800',
 };
 
-export function StatusBadge({ status }: { status: InvoiceStatus | CustomerStatus }) {
+export function StatusBadge({
+  status,
+}: {
+  status: InvoiceStatus | CustomerStatus;
+}) {
   return (
-    <Badge variant='outline' className={cn('text-[11px] font-medium capitalize', styles[status])}>
+    <Badge
+      variant="outline"
+      className={cn('text-[11px] font-medium capitalize', styles[status])}
+    >
       {status}
     </Badge>
   );

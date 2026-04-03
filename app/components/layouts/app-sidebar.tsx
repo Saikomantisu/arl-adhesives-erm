@@ -13,7 +13,12 @@ import { useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { NavLink, useLocation } from 'react-router';
 import { Separator } from '~/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '~/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '~/components/ui/tooltip';
 import { useUiStore } from '~/store/ui-store';
 
 interface NavItem {
@@ -65,7 +70,10 @@ export function AppSidebar({
   const isMobile = variant === 'mobile';
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const setCollapsed = useUiStore((s) => s.setSidebarCollapsed);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['Sales', 'Inventory']);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([
+    'Sales',
+    'Inventory',
+  ]);
   const location = useLocation();
 
   const toggleGroup = (label: string) => {
@@ -98,16 +106,16 @@ export function AppSidebar({
         )}
       >
         {/* Header */}
-        <div className='flex h-14 items-center justify-between px-3'>
+        <div className="flex h-14 items-center justify-between px-3">
           {!effectiveCollapsed && (
-            <div className='flex items-center gap-2'>
+            <div className="flex items-center gap-2">
               <div
-                className='flex h-8 w-8 items-center justify-center
-                  rounded-lg bg-indigo-600 text-white'
+                className="flex h-8 w-8 items-center justify-center
+                  rounded-lg bg-indigo-600 text-white"
               >
-                <Zap className='h-4 w-4' />
+                <Zap className="h-4 w-4" />
               </div>
-              <span className='text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50'>
+              <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
                 ARL Adhesives
               </span>
             </div>
@@ -115,51 +123,54 @@ export function AppSidebar({
 
           {!isMobile && (
             <Button
-              variant='ghost'
-              size='icon'
-              className='h-8 w-8 text-zinc-500 hover:text-zinc-900
-                dark:text-zinc-400 dark:hover:text-zinc-50'
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-zinc-500 hover:text-zinc-900
+                dark:text-zinc-400 dark:hover:text-zinc-50"
               onClick={() => setCollapsed(!collapsed)}
             >
               <ChevronLeft
-                className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')}
+                className={cn(
+                  'h-4 w-4 transition-transform',
+                  collapsed && 'rotate-180',
+                )}
               />
             </Button>
           )}
         </div>
 
-        <Separator className='bg-zinc-100 dark:bg-zinc-800' />
+        <Separator className="bg-zinc-100 dark:bg-zinc-800" />
 
         {/* Quick Action */}
-        <div className='px-3 pt-3'>
+        <div className="px-3 pt-3">
           {effectiveCollapsed ? (
             <Tooltip>
               <TooltipTrigger>
                 <NavLink
-                  to='/sales/new'
+                  to="/sales/new"
                   onClick={handleNavigate}
-                  className='inline-flex h-9 w-9 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700'
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
                 >
-                  <Plus className='h-4 w-4' />
+                  <Plus className="h-4 w-4" />
                 </NavLink>
               </TooltipTrigger>
-              <TooltipContent side='right'>New Sale</TooltipContent>
+              <TooltipContent side="right">New Sale</TooltipContent>
             </Tooltip>
           ) : (
             <NavLink
-              to='/sales/new'
+              to="/sales/new"
               onClick={handleNavigate}
-              className='inline-flex w-full items-center justify-start gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700'
+              className="inline-flex w-full items-center justify-start gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
-              <Plus className='h-4 w-4' />
+              <Plus className="h-4 w-4" />
               New Sale
             </NavLink>
           )}
         </div>
 
         {/* Navigation */}
-        <nav className='flex-1 overflow-y-auto px-3 py-3'>
-          <ul className='space-y-1'>
+        <nav className="flex-1 overflow-y-auto px-3 py-3">
+          <ul className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item);
@@ -182,10 +193,10 @@ export function AppSidebar({
                               : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
                           )}
                         >
-                          <Icon className='h-4 w-4' />
+                          <Icon className="h-4 w-4" />
                         </NavLink>
                       </TooltipTrigger>
-                      <TooltipContent side='right'>{item.label}</TooltipContent>
+                      <TooltipContent side="right">{item.label}</TooltipContent>
                     </Tooltip>
                   ) : (
                     <>
@@ -200,8 +211,8 @@ export function AppSidebar({
                               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
                           )}
                         >
-                          <Icon className='h-4 w-4 shrink-0' />
-                          <span className='flex-1 text-left'>{item.label}</span>
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="flex-1 text-left">{item.label}</span>
                           {hasChildren && (
                             <ChevronDown
                               className={cn(
@@ -209,7 +220,7 @@ export function AppSidebar({
                                 isExpanded && 'rotate-180',
                               )}
                               onClick={(e) => {
-                                  e.stopPropagation();
+                                e.stopPropagation();
                                 e.preventDefault();
                                 toggleGroup(item.label);
                               }}
@@ -218,7 +229,9 @@ export function AppSidebar({
                         </NavLink>
                       ) : (
                         <button
-                          onClick={() => (hasChildren ? toggleGroup(item.label) : undefined)}
+                          onClick={() =>
+                            hasChildren ? toggleGroup(item.label) : undefined
+                          }
                           className={cn(
                             'flex w-full items-center gap-2 rounded-md px-2 h-9 text-sm font-medium transition-colors',
                             active
@@ -226,8 +239,8 @@ export function AppSidebar({
                               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
                           )}
                         >
-                          <Icon className='h-4 w-4 shrink-0' />
-                          <span className='flex-1 text-left'>{item.label}</span>
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="flex-1 text-left">{item.label}</span>
                           {hasChildren && (
                             <ChevronDown
                               className={cn(
@@ -239,7 +252,7 @@ export function AppSidebar({
                         </button>
                       )}
                       {hasChildren && isExpanded && (
-                        <ul className='overflow-hidden'>
+                        <ul className="overflow-hidden">
                           {item.children!.map((child) => (
                             <li key={child.path + child.label}>
                               <NavLink
@@ -270,29 +283,29 @@ export function AppSidebar({
         </nav>
 
         {/* Footer */}
-        <div className='border-t border-zinc-100 p-3 dark:border-zinc-800'>
+        <div className="border-t border-zinc-100 p-3 dark:border-zinc-800">
           {effectiveCollapsed ? (
             <div
-              className='flex h-8 w-8 items-center justify-center rounded-full
+              className="flex h-8 w-8 items-center justify-center rounded-full
                 bg-indigo-100 text-xs font-semibold text-indigo-700
-                dark:bg-indigo-900 dark:text-indigo-300'
+                dark:bg-indigo-900 dark:text-indigo-300"
             >
               R
             </div>
           ) : (
-            <div className='flex items-center gap-2'>
+            <div className="flex items-center gap-2">
               <div
-                className='flex h-8 w-8 items-center justify-center rounded-full
+                className="flex h-8 w-8 items-center justify-center rounded-full
                   bg-indigo-100 text-xs font-semibold text-indigo-700
-                  dark:bg-indigo-900 dark:text-indigo-300'
+                  dark:bg-indigo-900 dark:text-indigo-300"
               >
                 R
               </div>
-              <div className='min-w-0 flex-1'>
-                <p className='truncate text-sm font-medium text-zinc-900 dark:text-zinc-50'>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
                   Ravinath Akalanka
                 </p>
-                <p className='truncate text-xs text-zinc-500'>Owner</p>
+                <p className="truncate text-xs text-zinc-500">Owner</p>
               </div>
             </div>
           )}
