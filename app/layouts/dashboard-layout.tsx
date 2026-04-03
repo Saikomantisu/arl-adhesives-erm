@@ -9,19 +9,22 @@ export default function DashboardLayout() {
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
 
   return (
-    <div className='flex min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950'>
-      <div className='hidden md:block'>
+    <div className="flex min-h-screen bg-zinc-50 font-sans dark:bg-zinc-950">
+      <div className="hidden md:block">
         <AppSidebar />
       </div>
 
       {/* Mobile navigation drawer */}
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetContent
-          side='left'
+          side="left"
           showCloseButton={false}
-          className='p-0 w-80 max-w-[85vw]'
+          className="p-0 w-80 max-w-[85vw]"
         >
-          <AppSidebar variant='mobile' onNavigate={() => setMobileNavOpen(false)} />
+          <AppSidebar
+            variant="mobile"
+            onNavigate={() => setMobileNavOpen(false)}
+          />
         </SheetContent>
       </Sheet>
       {/* 

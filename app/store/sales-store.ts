@@ -51,7 +51,12 @@ export const useSaleStore = create<SaleState>((set, get) => ({
     set((s) => ({
       items: s.items.map((i) =>
         i.product_id === product_id
-          ? { ...i, quantity: qty, total_price: qty * i.product_price, total_weight_kg: qty * 25 }
+          ? {
+              ...i,
+              quantity: qty,
+              total_price: qty * i.product_price,
+              total_weight_kg: qty * 25,
+            }
           : i,
       ),
     })),

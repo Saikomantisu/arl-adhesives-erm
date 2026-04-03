@@ -17,5 +17,6 @@ export const useUiStore = create<UiState>((set) => ({
   closeMobileNav: () => set({ mobileNavOpen: false }),
   sidebarCollapsed: false,
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-  toggleSidebarCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  toggleSidebarCollapsed: () =>
+    set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 }));
