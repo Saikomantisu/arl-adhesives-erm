@@ -65,7 +65,7 @@ export function buildAodHtml({
   `;
 
   const html = `
-    <div class="w-[210mm] min-h-[297mm] bg-white text-black font-serif text-[14px] p-[15mm_20mm_10mm_20mm] shadow-sm flex flex-col">
+    <div class="w-[210mm] min-h-[297mm] bg-white text-black font-sans text-[14px] p-[15mm_20mm_10mm_20mm] shadow-sm flex flex-col">
       <div class="flex-1">
         <div class="mb-4">
           <div class="text-[26px] font-bold text-[#2a5f8f] underline leading-tight">ARL Adhesives</div>
@@ -78,7 +78,7 @@ export function buildAodHtml({
 
         <div class="text-right italic text-sm mb-2">Customer Copy</div>
 
-        <div class="text-center text-2xl font-bold mb-8">ADVICE OF DISPATCH</div>
+        <div class="text-center text-2xl font-bold mb-8 font-serif">ADVICE OF DISPATCH</div>
 
         <div class="flex justify-between mb-8">
           <div class="max-w-[50%]">
@@ -158,7 +158,7 @@ export function buildAodHtml({
       <div class="mt-auto pt-6">
         <div class="h-1 bg-[#2a5f8f] mb-4"></div>
         <hr class="border-0 border-t-2 border-dashed border-black mb-4" />
-        <div class="text-center text-[11px] text-zinc-700">
+        <div class="text-center text-[12px] text-zinc-700">
           No. 3/6A, Edirigoda Road, Nugegoda. Tel. +94 777 766006, 777 767260 Email:
           arl.adhesives@gmail.com
         </div>

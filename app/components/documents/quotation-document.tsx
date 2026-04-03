@@ -44,7 +44,7 @@ export const QuotationDocument = forwardRef<
   return (
     <div
       ref={ref}
-      className="invoice-page min-h-[297mm] bg-white p-[15mm_20mm] shadow-sm text-black font-serif flex flex-col"
+      className="invoice-page min-h-[297mm] bg-white p-[15mm_20mm] shadow-sm text-black font-sans flex flex-col"
     >
       <div className="flex-1">
         <header className="mb-4">
@@ -63,7 +63,9 @@ export const QuotationDocument = forwardRef<
           </div>
         </header>
 
-        <h2 className="text-center text-2xl font-bold my-8">QUOTATION</h2>
+        <h2 className="text-center text-2xl font-bold font-serif my-8">
+          QUOTATION
+        </h2>
 
         <section className="flex justify-between mb-8 text-sm">
           <div className="max-w-[50%]">
@@ -102,7 +104,7 @@ export const QuotationDocument = forwardRef<
           </div>
         </section>
 
-        <section>
+        <section style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
           <table className="w-full border-collapse border border-black text-sm mb-8">
             <thead>
               <tr className="font-bold text-center">
@@ -189,9 +191,12 @@ export const QuotationDocument = forwardRef<
         </section>
       </div>
 
-      <footer className="mt-auto pt-6">
+      <footer
+        className="mt-auto pt-6"
+        style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
+      >
         <hr className="border-t-2 border-dashed border-black mb-3" />
-        <div className="text-center text-[10px] text-zinc-600">
+        <div className="text-center text-[12px] text-zinc-600">
           No. 3/6A, Edirigoda Road, Nugegoda. Tel. +94 777 766006, 777 767260
           Email: arl.adhesives@gmail.com
         </div>

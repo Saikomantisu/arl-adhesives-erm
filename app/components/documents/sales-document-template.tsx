@@ -44,7 +44,7 @@ export const SalesDocumentTemplate = forwardRef<
   return (
     <div
       ref={ref}
-      className="invoice-page min-h-[297mm] bg-white p-[15mm_20mm] shadow-sm text-black font-serif flex flex-col"
+      className="invoice-page min-h-[297mm] bg-white p-[15mm_20mm] font-sans shadow-sm text-black flex flex-col"
     >
       <div className="flex-1">
         <header className="mb-4">
@@ -65,7 +65,7 @@ export const SalesDocumentTemplate = forwardRef<
 
         <div className="text-right italic text-sm mb-2">Customer Copy</div>
 
-        <h2 className="text-center text-2xl font-bold mb-8">{documentTitle}</h2>
+        <h2 className="text-center text-2xl font-bold mb-8 font-serif">{documentTitle}</h2>
 
         <div className="flex justify-between mb-8 text-sm">
           <div className="max-w-[50%]">
@@ -211,7 +211,7 @@ export const SalesDocumentTemplate = forwardRef<
 
       <div className="mt-auto pt-6">
         <hr className="border-t-2 border-dashed border-black mb-3" />
-        <div className="text-center text-[10px] text-zinc-600">
+        <div className="text-center text-[12px] text-zinc-600">
           No. 3/6A, Edirigoda Road, Nugegoda. Tel. +94 777 766006, 777 767260
           Email: arl.adhesives@gmail.com
         </div>
