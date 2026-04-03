@@ -1,6 +1,6 @@
 import { mutationGeneric, queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
-import { getByExternalId, mapActivity, requireByExternalId } from './lib';
+import { getById, mapActivity, requireById } from './lib';
 import { activityTypeValidator } from './model';
 
 export const listByCustomer = queryGeneric({
@@ -8,7 +8,7 @@ export const listByCustomer = queryGeneric({
     customerId: v.string(),
   },
   handler: async (ctx, args) => {
-    const customer = await getByExternalId(ctx, 'customers', args.customerId);
+    const customer = await getById(ctx, 'customers', args.customerId);
     if (!customer) return [];
 
     const activities = await ctx.db
@@ -29,7 +29,7 @@ export const create = mutationGeneric({
     refNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const customer = await requireByExternalId(
+    const customer = await requireById(
       ctx,
       'customers',
       args.customerId,
@@ -38,7 +38,6 @@ export const create = mutationGeneric({
     const now = Date.now();
     const activityId = await ctx.db.insert('activities', {
       customerId: customer._id,
-      customerExternalId: args.customerId,
       type: args.type,
       description: args.description,
       refNumber: args.refNumber,

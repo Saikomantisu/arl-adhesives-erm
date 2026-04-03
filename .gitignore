@@ -5,8 +5,7 @@
 # React Router
 /.react-router/
 /build/
-
-/supabase
+/convex/_generated/
 .env.local
 
 convex/_generated

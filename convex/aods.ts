@@ -1,18 +1,11 @@
 import { mutationGeneric, queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
-import {
-  formatAodNumber,
-  getByExternalId,
-  mapAod,
-  takeNextSequence,
-  toExternalId,
-} from './lib';
+import { formatAodNumber, getById, mapAod, takeNextSequence } from './lib';
 
 const createActivityRecord = async (
   ctx: { db: any },
   params: {
     customerId: any;
-    customerExternalId: string;
     description: string;
     refNumber: string;
     timestamp: number;
@@ -20,7 +13,6 @@ const createActivityRecord = async (
 ) => {
   await ctx.db.insert('activities', {
     customerId: params.customerId,
-    customerExternalId: params.customerExternalId,
     type: 'aod_generated',
     description: params.description,
     refNumber: params.refNumber,
@@ -34,7 +26,7 @@ export const getByInvoice = queryGeneric({
     invoiceId: v.string(),
   },
   handler: async (ctx, args) => {
-    const invoice = await getByExternalId(ctx, 'invoices', args.invoiceId);
+    const invoice = await getById(ctx, 'invoices', args.invoiceId);
     if (!invoice) return null;
 
     const aod = await ctx.db
@@ -51,7 +43,7 @@ export const createForInvoice = mutationGeneric({
     invoiceId: v.string(),
   },
   handler: async (ctx, args) => {
-    const invoice = await getByExternalId(ctx, 'invoices', args.invoiceId);
+    const invoice = await getById(ctx, 'invoices', args.invoiceId);
     if (!invoice) throw new Error(`Invoice ${args.invoiceId} not found`);
 
     const existing = await ctx.db
@@ -75,7 +67,6 @@ export const createForInvoice = mutationGeneric({
 
     const aodId = await ctx.db.insert('aods', {
       invoiceId: invoice._id,
-      invoiceExternalId: toExternalId(invoice),
       aodNumber,
       numberYear: year,
       numberMonth: new Date(timestamp).getUTCMonth() + 1,
@@ -89,7 +80,6 @@ export const createForInvoice = mutationGeneric({
 
     await createActivityRecord(ctx, {
       customerId: invoice.customerId,
-      customerExternalId: invoice.customerExternalId,
       description: `AOD generated for invoice ${invoice.number}`,
       refNumber: aodNumber,
       timestamp,

@@ -22,9 +22,7 @@ export default defineSchema({
     payee: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  })
-    .index('by_legacy_id', ['legacyId'])
-    .index('by_email', ['email']),
+  }).index('by_email', ['email']),
 
   products: defineTable({
     legacyId: v.optional(v.string()),
@@ -37,9 +35,7 @@ export default defineSchema({
     pricePerKg: v.number(),
     packageWeightKg: v.number(),
     currentStockBoxes: v.number(),
-  })
-    .index('by_legacy_id', ['legacyId'])
-    .index('by_sku', ['sku']),
+  }).index('by_sku', ['sku']),
 
   invoices: defineTable({
     legacyId: v.optional(v.string()),
@@ -49,7 +45,7 @@ export default defineSchema({
     numberSequence: v.optional(v.number()),
     numberingVersion: numberingVersionValidator,
     customerId: v.id('customers'),
-    customerExternalId: v.string(),
+    customerExternalId: v.optional(v.string()),
     status: invoiceStatusValidator,
     createdAt: v.number(),
     dueDate: v.number(),
@@ -58,7 +54,6 @@ export default defineSchema({
     total: v.number(),
     poNumber: v.string(),
   })
-    .index('by_legacy_id', ['legacyId'])
     .index('by_number', ['number'])
     .index('by_customer_id', ['customerId'])
     .index('by_created_at', ['createdAt'])
@@ -67,9 +62,9 @@ export default defineSchema({
   invoiceItems: defineTable({
     legacyId: v.optional(v.string()),
     invoiceId: v.id('invoices'),
-    invoiceExternalId: v.string(),
+    invoiceExternalId: v.optional(v.string()),
     productId: v.id('products'),
-    productExternalId: v.string(),
+    productExternalId: v.optional(v.string()),
     name: v.string(),
     quantity: v.number(),
     productPrice: v.number(),
@@ -77,14 +72,12 @@ export default defineSchema({
     pricePerKg: v.number(),
     totalPrice: v.number(),
     createdAt: v.number(),
-  })
-    .index('by_legacy_id', ['legacyId'])
-    .index('by_invoice_id', ['invoiceId']),
+  }).index('by_invoice_id', ['invoiceId']),
 
   aods: defineTable({
     legacyId: v.optional(v.string()),
     invoiceId: v.id('invoices'),
-    invoiceExternalId: v.string(),
+    invoiceExternalId: v.optional(v.string()),
     aodNumber: v.string(),
     numberYear: v.optional(v.number()),
     numberMonth: v.optional(v.number()),
@@ -95,21 +88,19 @@ export default defineSchema({
     invoiceNumber: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index('by_legacy_id', ['legacyId'])
     .index('by_invoice_id', ['invoiceId'])
     .index('by_aod_number', ['aodNumber']),
 
   activities: defineTable({
     legacyId: v.optional(v.string()),
     customerId: v.id('customers'),
-    customerExternalId: v.string(),
+    customerExternalId: v.optional(v.string()),
     type: activityTypeValidator,
     description: v.string(),
     refNumber: v.optional(v.string()),
     timestamp: v.number(),
     updatedAt: v.number(),
   })
-    .index('by_legacy_id', ['legacyId'])
     .index('by_customer_id', ['customerId'])
     .index('by_timestamp', ['timestamp']),
 

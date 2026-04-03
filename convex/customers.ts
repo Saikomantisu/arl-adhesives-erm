@@ -1,6 +1,6 @@
 import { queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
-import { getByExternalId, mapCustomer } from './lib';
+import { getById, mapCustomer } from './lib';
 
 export const list = queryGeneric({
   args: {},
@@ -15,7 +15,7 @@ export const get = queryGeneric({
     customerId: v.string(),
   },
   handler: async (ctx, args) => {
-    const customer = await getByExternalId(ctx, 'customers', args.customerId);
+    const customer = await getById(ctx, 'customers', args.customerId);
     return customer ? mapCustomer(customer) : null;
   },
 });

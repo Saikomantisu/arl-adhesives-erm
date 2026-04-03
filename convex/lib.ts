@@ -1,36 +1,25 @@
 const INVOICE_NUMBER_REGEX = /^ARL\/IN-(\d{2})\/(\d{2})\/(\d{2})$/;
 const AOD_NUMBER_REGEX = /^ARL\/AOD-(\d{2})\/(\d{2})\/(\d{2})$/;
 
-export const toExternalId = <
-  T extends { _id: string; legacyId?: string | null },
->(
-  doc: T,
-) => doc.legacyId ?? doc._id;
-
-export const getByExternalId = async (
+export const getById = async (
   ctx: { db: any },
   tableName: string,
-  externalId: string,
+  id: string,
 ) => {
-  const normalizedId = ctx.db.normalizeId(tableName, externalId);
+  const normalizedId = ctx.db.normalizeId(tableName, id);
   if (normalizedId) {
-    const direct = await ctx.db.get(normalizedId);
-    if (direct) return direct;
+    return ctx.db.get(normalizedId);
   }
-
-  return ctx.db
-    .query(tableName)
-    .withIndex('by_legacy_id', (q: any) => q.eq('legacyId', externalId))
-    .unique();
+  return null;
 };
 
-export const requireByExternalId = async (
+export const requireById = async (
   ctx: { db: any },
   tableName: string,
-  externalId: string,
+  id: string,
   errorMessage: string,
 ) => {
-  const doc = await getByExternalId(ctx, tableName, externalId);
+  const doc = await getById(ctx, tableName, id);
   if (!doc) throw new Error(errorMessage);
   return doc;
 };
@@ -169,7 +158,7 @@ export const setSequenceNextValue = async (
 };
 
 export const mapCustomer = (doc: any) => ({
-  id: toExternalId(doc),
+  id: doc._id,
   email: doc.email,
   phone: doc.phone ?? '',
   payee: doc.payee ?? '',
@@ -183,7 +172,7 @@ export const mapCustomer = (doc: any) => ({
 });
 
 export const mapProduct = (doc: any) => ({
-  id: toExternalId(doc),
+  id: doc._id,
   sku: doc.sku,
   name: doc.name,
   price_per_kg: Number(doc.pricePerKg ?? 0),
@@ -194,9 +183,9 @@ export const mapProduct = (doc: any) => ({
 });
 
 export const mapInvoice = (doc: any) => ({
-  id: toExternalId(doc),
+  id: doc._id,
   number: doc.number,
-  customer_id: doc.customerExternalId,
+  customer_id: doc.customerId,
   status: doc.status,
   created_at: doc.createdAt,
   due_date: doc.dueDate,
@@ -207,9 +196,9 @@ export const mapInvoice = (doc: any) => ({
 });
 
 export const mapInvoiceItem = (doc: any) => ({
-  id: toExternalId(doc),
-  invoice_id: doc.invoiceExternalId,
-  product_id: doc.productExternalId,
+  id: doc._id,
+  invoice_id: doc.invoiceId,
+  product_id: doc.productId,
   name: doc.name,
   quantity: Number(doc.quantity ?? 0),
   product_price: Number(doc.productPrice ?? 0),
@@ -220,8 +209,8 @@ export const mapInvoiceItem = (doc: any) => ({
 });
 
 export const mapAod = (doc: any) => ({
-  id: toExternalId(doc),
-  invoice_id: doc.invoiceExternalId,
+  id: doc._id,
+  invoice_id: doc.invoiceId,
   aod_number: doc.aodNumber,
   printed_at: doc.printedAt,
   po_number: doc.poNumber ?? null,
@@ -230,8 +219,8 @@ export const mapAod = (doc: any) => ({
 });
 
 export const mapActivity = (doc: any) => ({
-  id: toExternalId(doc),
-  customer_id: doc.customerExternalId,
+  id: doc._id,
+  customer_id: doc.customerId,
   type: doc.type,
   description: doc.description,
   ref_number: doc.refNumber ?? undefined,

@@ -5,13 +5,12 @@ import {
   filterToMonth,
   formatInvoiceNumber,
   formatLkrCurrency,
-  getByExternalId,
+  getById,
   mapInvoice,
   mapInvoiceItem,
-  requireByExternalId,
+  requireById,
   sortByCreatedAtDesc,
   takeNextSequence,
-  toExternalId,
 } from './lib';
 import { activityTypeValidator, invoiceStatusValidator } from './model';
 
@@ -29,7 +28,6 @@ const createActivityRecord = async (
   ctx: { db: any },
   params: {
     customerId: any;
-    customerExternalId: string;
     type:
       | 'invoice_generated'
       | 'invoice_paid'
@@ -42,7 +40,6 @@ const createActivityRecord = async (
 ) => {
   await ctx.db.insert('activities', {
     customerId: params.customerId,
-    customerExternalId: params.customerExternalId,
     type: params.type,
     description: params.description,
     refNumber: params.refNumber,
@@ -91,7 +88,7 @@ export const itemsByInvoice = queryGeneric({
     invoiceId: v.string(),
   },
   handler: async (ctx, args) => {
-    const invoice = await getByExternalId(ctx, 'invoices', args.invoiceId);
+    const invoice = await getById(ctx, 'invoices', args.invoiceId);
     if (!invoice) return [];
 
     const items = await ctx.db
@@ -120,7 +117,7 @@ export const create = mutationGeneric({
       throw new Error('At least one invoice item is required');
     }
 
-    const customer = await requireByExternalId(
+    const customer = await requireById(
       ctx,
       'customers',
       args.invoice.customer_id,
@@ -129,7 +126,7 @@ export const create = mutationGeneric({
 
     const resolvedItems = await Promise.all(
       args.invoiceItems.map(async (item) => {
-        const product = await requireByExternalId(
+        const product = await requireById(
           ctx,
           'products',
           item.product_id,
@@ -166,7 +163,6 @@ export const create = mutationGeneric({
       numberSequence: sequence,
       numberingVersion: 'yearly_continuous',
       customerId: customer._id,
-      customerExternalId: toExternalId(customer),
       status: 'pending',
       createdAt: timestamp,
       dueDate: addOneMonthPreservingUtcDay(timestamp),
@@ -176,14 +172,10 @@ export const create = mutationGeneric({
       poNumber: args.invoice.po_number,
     });
 
-    const externalInvoiceId = String(invoiceId);
-
     for (const resolved of resolvedItems) {
       await ctx.db.insert('invoiceItems', {
         invoiceId,
-        invoiceExternalId: externalInvoiceId,
         productId: resolved.product._id,
-        productExternalId: toExternalId(resolved.product),
         name: resolved.item.name,
         quantity: resolved.item.quantity,
         productPrice: resolved.item.product_price,
@@ -201,7 +193,6 @@ export const create = mutationGeneric({
 
     await createActivityRecord(ctx, {
       customerId: customer._id,
-      customerExternalId: toExternalId(customer),
       type: 'invoice_generated',
       description: `Invoice ${number} generated for PO ${args.invoice.po_number} (total ${formatLkrCurrency(args.invoice.total)}).`,
       refNumber: number,
@@ -220,7 +211,7 @@ export const updateStatus = mutationGeneric({
     status: invoiceStatusValidator,
   },
   handler: async (ctx, args) => {
-    const invoice = await requireByExternalId(
+    const invoice = await requireById(
       ctx,
       'invoices',
       args.invoiceId,
@@ -255,7 +246,6 @@ export const updateStatus = mutationGeneric({
 
     await createActivityRecord(ctx, {
       customerId: invoice.customerId,
-      customerExternalId: invoice.customerExternalId,
       type: activityMap[args.status].type as
         | 'invoice_paid'
         | 'invoice_pending'
