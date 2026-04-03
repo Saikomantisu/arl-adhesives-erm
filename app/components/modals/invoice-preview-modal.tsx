@@ -17,6 +17,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { convexQuery } from '@convex-dev/react-query';
 import { generateAod } from '~/services/aod-service';
 import { buildAodHtml } from '~/lib/print/aod-template';
+import {
+  formatPrintDocumentTitle,
+  printHtmlDocument,
+} from '~/lib/print/browser-print';
 import { convexApi } from '~/lib/convex';
 import { SalesDocumentTemplate } from '~/components/documents/sales-document-template';
 
@@ -91,68 +95,14 @@ export function InvoicePreviewModal({
     };
   }, [open, updateScale]);
 
-  const printHtml = useCallback((bodyHtml: string, extraCss: string) => {
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
-    iframe.style.top = '-9999px';
-    iframe.style.left = '-9999px';
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!doc) return;
-
-    const stylesheets = Array.from(document.styleSheets)
-      .map((sheet) => {
-        try {
-          if (sheet.href) {
-            return `<link rel="stylesheet" href="${sheet.href}" />`;
-          }
-          const rules = Array.from(sheet.cssRules)
-            .map((rule) => rule.cssText)
-            .join('\n');
-          return `<style>${rules}</style>`;
-        } catch {
-          return sheet.href
-            ? `<link rel="stylesheet" href="${sheet.href}" />`
-            : '';
-        }
-      })
-      .join('\n');
-
-    doc.open();
-    doc.write(`<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    ${stylesheets}
-    <style>
-      @page { size: A4; margin: 0; }
-      html, body { margin: 0; padding: 0; background: white; }
-      ${extraCss}
-    </style>
-  </head>
-  <body>${bodyHtml}</body>
-</html>`);
-    doc.close();
-
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        setTimeout(() => iframe.remove(), 1000);
-      }, 250);
-    };
-  }, []);
-
   const handlePrint = useCallback(() => {
     const invoiceEl = invoiceRef.current;
     if (!invoiceEl) return;
 
-    printHtml(
-      invoiceEl.outerHTML,
-      `
+    printHtmlDocument({
+      bodyHtml: invoiceEl.outerHTML,
+      title: formatPrintDocumentTitle('Invoice', invoice.number),
+      extraCss: `
       .invoice-page {
         width: 210mm;
         min-height: 297mm;
@@ -161,8 +111,8 @@ export function InvoicePreviewModal({
         padding: 10mm 15mm !important;
       }
       `,
-    );
-  }, [printHtml]);
+    });
+  }, [invoice.number]);
 
   const handlePrintAod = useCallback(async () => {
     if (!invoice.id) return;
@@ -175,8 +125,12 @@ export function InvoicePreviewModal({
       items,
     });
 
-    printHtml(html, extraCss);
-  }, [aod, customer, generateAodMutation, invoice, items, printHtml]);
+    printHtmlDocument({
+      bodyHtml: html,
+      extraCss,
+      title: formatPrintDocumentTitle('AOD', row.aod_number),
+    });
+  }, [aod, customer, generateAodMutation, invoice, items]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
