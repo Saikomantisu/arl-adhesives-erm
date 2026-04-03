@@ -47,7 +47,7 @@ export const QuotationDocument = forwardRef<
       className="invoice-page min-h-[297mm] bg-white p-[15mm_20mm] shadow-sm text-black font-sans flex flex-col"
     >
       <div className="flex-1">
-        <header className="mb-4">
+        <header className="mb-4 font-serif">
           <h1 className="text-[26px] font-bold text-[#2a5f8f] underline leading-tight">
             ARL Adhesives
           </h1>
