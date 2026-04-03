@@ -31,19 +31,13 @@ export const meta: MetaFunction = () => {
 
 function QuotationRow({
   quotation,
+  customer,
   openPreview,
 }: {
   quotation: Quotation;
+  customer: Customer | null;
   openPreview: (quotation: Quotation) => void;
 }) {
-  const customerQuery = useQuery(
-    convexQuery(
-      convexApi.customers.get,
-      quotation.customer_id ? { customerId: quotation.customer_id } : 'skip',
-    ),
-  );
-  const customer = (customerQuery.data ?? null) as Customer | null;
-
   return (
     <TableRow>
       <TableCell className="md:hidden">
@@ -58,7 +52,7 @@ function QuotationRow({
             <p className="mt-1 text-xs text-zinc-500">
               Created{' '}
               {quotation.created_at
-                ? new Date(quotation.created_at).toLocaleDateString('en-UK')
+                ? new Date(quotation.created_at).toLocaleDateString('en-GB')
                 : '-'}
             </p>
           </div>
@@ -101,7 +95,7 @@ function QuotationRow({
 
       <TableCell className="hidden md:table-cell text-sm text-zinc-500">
         {quotation.created_at
-          ? new Date(quotation.created_at).toLocaleDateString('en-UK')
+          ? new Date(quotation.created_at).toLocaleDateString('en-GB')
           : '-'}
       </TableCell>
 
@@ -125,8 +119,15 @@ function QuotationRow({
 
 export default function QuotationIndexPage() {
   const quotationsQuery = useQuery(convexQuery(convexApi.quotations.list, {}));
+  const customersQuery = useQuery(convexQuery(convexApi.customers.list, {}));
   const quotations = (quotationsQuery.data ?? []) as Quotation[];
-  const isLoading = quotationsQuery.isLoading;
+  const customers = (customersQuery.data ?? []) as Customer[];
+  const customersById = new Map(
+    customers.flatMap((customer) =>
+      customer.id ? [[customer.id, customer] as const] : [],
+    ),
+  );
+  const isLoading = quotationsQuery.isLoading || customersQuery.isLoading;
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -245,6 +246,9 @@ export default function QuotationIndexPage() {
                     <QuotationRow
                       key={quotation.id}
                       quotation={quotation}
+                      customer={
+                        customersById.get(quotation.customer_id) ?? null
+                      }
                       openPreview={openPreview}
                     />
                   ))}

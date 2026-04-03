@@ -16,7 +16,7 @@ interface QuotationDocumentProps {
   >;
 }
 
-const formatDocumentDate = (value?: Date) => {
+const formatDocumentDate = (value?: number) => {
   if (!value) return '-';
 
   const date = new Date(value);
@@ -26,13 +26,13 @@ const formatDocumentDate = (value?: Date) => {
   return `${day}.${month}.${year}`;
 };
 
-const addOneMonth = (value?: Date) => {
+const addOneMonth = (value?: number) => {
   if (!value) return undefined;
 
   const date = new Date(value);
   const next = new Date(date);
   next.setMonth(next.getMonth() + 1);
-  return next;
+  return next.getTime();
 };
 
 export const QuotationDocument = forwardRef<
@@ -145,7 +145,7 @@ export const QuotationDocument = forwardRef<
                   <td className="border border-black p-2 text-left leading-relaxed">
                     {item.name}
                     <br />
-                    Make : Malayasia
+                    Make : Malaysia
                     <br />
                     Brand : Adtek
                   </td>

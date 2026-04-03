@@ -46,23 +46,17 @@ export const meta: MetaFunction = () => {
 
 function InvoiceRow({
   inv,
+  customer,
   openPreview,
 }: {
   inv: Invoice;
+  customer: Customer | null;
   openPreview: (inv: Invoice) => void;
 }) {
   const [status, setStatus] = useState<InvoiceStatus>(
     (inv.status as InvoiceStatus) ?? 'pending',
   );
   const statusUpdateLockedRef = useRef(false);
-
-  const customerQuery = useQuery(
-    convexQuery(
-      convexApi.customers.get,
-      inv.customer_id ? { customerId: inv.customer_id } : 'skip',
-    ),
-  );
-  const customer = (customerQuery.data ?? null) as Customer | null;
 
   const updateStatusMutation = useMutation({
     mutationFn: (nextStatus: InvoiceStatus) =>
@@ -147,7 +141,7 @@ function InvoiceRow({
             <p className="mt-1 text-xs text-zinc-500">
               Due{' '}
               {inv.due_date
-                ? new Date(inv.due_date).toLocaleDateString('en-UK')
+                ? new Date(inv.due_date).toLocaleDateString('en-GB')
                 : '-'}
             </p>
           </div>
@@ -196,7 +190,7 @@ function InvoiceRow({
 
       <TableCell className="hidden text-sm text-zinc-500 md:table-cell">
         {inv.due_date
-          ? new Date(inv.due_date).toLocaleDateString('en-UK')
+          ? new Date(inv.due_date).toLocaleDateString('en-GB')
           : '-'}
       </TableCell>
 
@@ -209,15 +203,20 @@ function InvoiceRow({
 
 export default function SalesIndexPage() {
   const invoiceRowsQuery = useQuery(convexQuery(convexApi.invoices.list, {}));
+  const customersQuery = useQuery(convexQuery(convexApi.customers.list, {}));
   const invoiceRows = (invoiceRowsQuery.data ?? []) as Invoice[];
-  const isLoading = invoiceRowsQuery.isLoading;
+  const customers = (customersQuery.data ?? []) as Customer[];
+  const customersById = new Map(
+    customers.flatMap((customer) =>
+      customer.id ? [[customer.id, customer] as const] : [],
+    ),
+  );
+  const isLoading = invoiceRowsQuery.isLoading || customersQuery.isLoading;
 
   const [previewInvoiceId, setPreviewInvoiceId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [paidExpanded, setPaidExpanded] = useState(false);
-
-  const showEmpty = false;
-  const data = showEmpty ? [] : invoiceRows;
+  const data = invoiceRows;
 
   // Separate invoices into active (pending/overdue) and paid
   const activeInvoices = data.filter((inv) => inv.status !== 'paid');
@@ -313,6 +312,7 @@ export default function SalesIndexPage() {
                       <InvoiceRow
                         key={inv.id}
                         inv={inv}
+                        customer={customersById.get(inv.customer_id) ?? null}
                         openPreview={openPreview}
                       />
                     ))}
@@ -369,6 +369,9 @@ export default function SalesIndexPage() {
                               <InvoiceRow
                                 key={inv.id}
                                 inv={inv}
+                                customer={
+                                  customersById.get(inv.customer_id) ?? null
+                                }
                                 openPreview={openPreview}
                               />
                             ))}

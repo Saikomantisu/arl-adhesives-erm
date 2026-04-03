@@ -37,7 +37,7 @@ export interface Activity {
     | 'invoice_pending'
     | 'invoice_overdue';
   description: string;
-  timestamp: Date;
+  timestamp: number;
   ref_number?: string;
 }
 
@@ -46,8 +46,8 @@ export interface Invoice {
   number?: string;
   customer_id: string;
   status?: InvoiceStatus;
-  created_at?: Date;
-  due_date?: Date;
+  created_at?: number;
+  due_date?: number;
   subtotal: number;
   tax: number;
   total: number;
@@ -58,7 +58,7 @@ export interface Quotation {
   id?: string;
   number?: string;
   customer_id: string;
-  created_at?: Date;
+  created_at?: number;
   subtotal: number;
   tax: number;
   total: number;
@@ -69,10 +69,10 @@ export interface Aod {
   id?: string;
   invoice_id: string;
   aod_number: string;
-  printed_at: Date;
+  printed_at: number;
   po_number?: string | null;
   invoice_number?: string | null;
-  created_at?: Date;
+  created_at?: number;
 }
 
 export interface SalesLineItem {
@@ -95,22 +95,22 @@ export interface QuotationItem extends SalesLineItem {
 }
 
 export const formatCurrency = (n: number) =>
-  new Intl.NumberFormat('en-UK', {
+  new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'LKR',
     maximumFractionDigits: 0,
   }).format(n);
 
 export const invoiceFormatCurrency = (n: number) =>
-  new Intl.NumberFormat('en-UK', {
+  new Intl.NumberFormat('en-GB', {
     style: 'decimal',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
 
-export const timeAgo = (date: Date): string => {
+export const timeAgo = (value: number | Date): string => {
   const now = new Date();
-  const date_obj = new Date(date);
+  const date_obj = new Date(value);
 
   const diffMs = now.getTime() - date_obj.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));

@@ -9,7 +9,7 @@ interface SalesDocumentTemplateProps {
   documentTitle: string;
   numberLabel: string;
   number?: string;
-  createdAt?: Date;
+  createdAt?: number;
   poNumber?: string | null;
   customer: Customer | null;
   items: SalesLineItem[];
@@ -99,7 +99,7 @@ export const SalesDocumentTemplate = forwardRef<
                   <td>
                     :{' '}
                     {createdAt
-                      ? new Date(createdAt).toLocaleDateString('en-UK', {
+                      ? new Date(createdAt).toLocaleDateString('en-GB', {
                           year: 'numeric',
                           month: '2-digit',
                           day: '2-digit',
@@ -154,7 +154,7 @@ export const SalesDocumentTemplate = forwardRef<
                 <td className="border border-black p-2 text-left">
                   {item.name}
                   <br />
-                  Make : Malayasia
+                  Make : Malaysia
                   <br />
                   Brand : Adtek
                 </td>

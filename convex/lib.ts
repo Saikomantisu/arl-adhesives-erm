@@ -1,22 +1,27 @@
+import type { Doc, Id, TableNames } from './_generated/dataModel';
+import type { MutationCtx, QueryCtx } from './_generated/server';
+
 const INVOICE_NUMBER_REGEX = /^ARL\/IN-(\d{2})\/(\d{2})\/(\d{2})$/;
 const QUOTATION_NUMBER_REGEX = /^ARL\/QTN-(\d{2})\/(\d{2})\/(\d{2})$/;
 const AOD_NUMBER_REGEX = /^ARL\/AOD-(\d{2})\/(\d{2})\/(\d{2})$/;
 
-export const getById = async (
-  ctx: { db: any },
-  tableName: string,
+type DbCtx = QueryCtx | MutationCtx;
+
+export const getById = async <T extends TableNames>(
+  ctx: DbCtx,
+  tableName: T,
   id: string,
 ) => {
   const normalizedId = ctx.db.normalizeId(tableName, id);
   if (normalizedId) {
-    return ctx.db.get(normalizedId);
+    return ctx.db.get(normalizedId) as Promise<Doc<T> | null>;
   }
   return null;
 };
 
-export const requireById = async (
-  ctx: { db: any },
-  tableName: string,
+export const requireById = async <T extends TableNames>(
+  ctx: DbCtx,
+  tableName: T,
   id: string,
   errorMessage: string,
 ) => {
@@ -77,15 +82,6 @@ export const addOneMonthPreservingUtcDay = (timestamp: number) => {
   const seconds = date.getUTCSeconds();
   const milliseconds = date.getUTCMilliseconds();
 
-  const nextMonthStart = Date.UTC(
-    year,
-    month + 1,
-    1,
-    hours,
-    minutes,
-    seconds,
-    milliseconds,
-  );
   const lastDayOfNextMonth = new Date(
     Date.UTC(year, month + 2, 0),
   ).getUTCDate();
@@ -103,15 +99,13 @@ export const addOneMonthPreservingUtcDay = (timestamp: number) => {
 };
 
 export const takeNextSequence = async (
-  ctx: { db: any },
+  ctx: MutationCtx,
   scope: 'invoice' | 'quotation' | 'aod',
   year: number,
 ) => {
   const existing = await ctx.db
     .query('sequences')
-    .withIndex('by_scope_year', (q: any) =>
-      q.eq('scope', scope).eq('year', year),
-    )
+    .withIndex('by_scope_year', (q) => q.eq('scope', scope).eq('year', year))
     .unique();
 
   const now = Date.now();
@@ -136,16 +130,14 @@ export const takeNextSequence = async (
 };
 
 export const setSequenceNextValue = async (
-  ctx: { db: any },
+  ctx: MutationCtx,
   scope: 'invoice' | 'quotation' | 'aod',
   year: number,
   nextValue: number,
 ) => {
   const existing = await ctx.db
     .query('sequences')
-    .withIndex('by_scope_year', (q: any) =>
-      q.eq('scope', scope).eq('year', year),
-    )
+    .withIndex('by_scope_year', (q) => q.eq('scope', scope).eq('year', year))
     .unique();
 
   if (existing) {
@@ -164,7 +156,7 @@ export const setSequenceNextValue = async (
   });
 };
 
-export const mapCustomer = (doc: any) => ({
+export const mapCustomer = (doc: Doc<'customers'>) => ({
   id: doc._id,
   email: doc.email,
   phone: doc.phone ?? '',
@@ -178,7 +170,7 @@ export const mapCustomer = (doc: any) => ({
   lifetime_value: Number(doc.lifetimeValue ?? 0),
 });
 
-export const mapProduct = (doc: any) => ({
+export const mapProduct = (doc: Doc<'products'>) => ({
   id: doc._id,
   sku: doc.sku,
   name: doc.name,
@@ -189,7 +181,7 @@ export const mapProduct = (doc: any) => ({
   stock_velocity: Array.isArray(doc.stockVelocity) ? doc.stockVelocity : [],
 });
 
-export const mapInvoice = (doc: any) => ({
+export const mapInvoice = (doc: Doc<'invoices'>) => ({
   id: doc._id,
   number: doc.number,
   customer_id: doc.customerId,
@@ -202,7 +194,7 @@ export const mapInvoice = (doc: any) => ({
   po_number: doc.poNumber,
 });
 
-export const mapQuotation = (doc: any) => ({
+export const mapQuotation = (doc: Doc<'quotations'>) => ({
   id: doc._id,
   number: doc.number,
   customer_id: doc.customerId,
@@ -213,7 +205,7 @@ export const mapQuotation = (doc: any) => ({
   po_number: doc.poNumber ?? null,
 });
 
-export const mapInvoiceItem = (doc: any) => ({
+export const mapInvoiceItem = (doc: Doc<'invoiceItems'>) => ({
   id: doc._id,
   invoice_id: doc.invoiceId,
   product_id: doc.productId,
@@ -226,7 +218,7 @@ export const mapInvoiceItem = (doc: any) => ({
   created_at: doc.createdAt,
 });
 
-export const mapQuotationItem = (doc: any) => ({
+export const mapQuotationItem = (doc: Doc<'quotationItems'>) => ({
   id: doc._id,
   quotation_id: doc.quotationId,
   product_id: doc.productId,
@@ -239,7 +231,7 @@ export const mapQuotationItem = (doc: any) => ({
   created_at: doc.createdAt,
 });
 
-export const mapAod = (doc: any) => ({
+export const mapAod = (doc: Doc<'aods'>) => ({
   id: doc._id,
   invoice_id: doc.invoiceId,
   aod_number: doc.aodNumber,
@@ -249,7 +241,7 @@ export const mapAod = (doc: any) => ({
   created_at: doc.createdAt,
 });
 
-export const mapActivity = (doc: any) => ({
+export const mapActivity = (doc: Doc<'activities'>) => ({
   id: doc._id,
   customer_id: doc.customerId,
   type: doc.type,
@@ -260,7 +252,7 @@ export const mapActivity = (doc: any) => ({
 });
 
 export const formatLkrCurrency = (amount: number) =>
-  new Intl.NumberFormat('en-UK', {
+  new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'LKR',
     minimumFractionDigits: 2,

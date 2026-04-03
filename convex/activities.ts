@@ -1,9 +1,9 @@
-import { mutationGeneric, queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
 import { getById, mapActivity, requireById } from './lib';
 import { activityTypeValidator } from './model';
 
-export const listByCustomer = queryGeneric({
+export const listByCustomer = query({
   args: {
     customerId: v.string(),
   },
@@ -21,7 +21,7 @@ export const listByCustomer = queryGeneric({
   },
 });
 
-export const create = mutationGeneric({
+export const create = mutation({
   args: {
     customerId: v.string(),
     type: activityTypeValidator,

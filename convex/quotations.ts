@@ -1,5 +1,5 @@
-import { mutationGeneric, queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
 import {
   filterToMonth,
   formatLkrCurrency,
@@ -21,7 +21,7 @@ const quotationItemInputValidator = v.object({
   total_price: v.number(),
 });
 
-export const list = queryGeneric({
+export const list = query({
   args: {
     monthTimestamp: v.optional(v.number()),
   },
@@ -36,7 +36,7 @@ export const list = queryGeneric({
   },
 });
 
-export const itemsByQuotation = queryGeneric({
+export const itemsByQuotation = query({
   args: {
     quotationId: v.string(),
   },
@@ -54,7 +54,7 @@ export const itemsByQuotation = queryGeneric({
   },
 });
 
-export const create = mutationGeneric({
+export const create = mutation({
   args: {
     quotation: v.object({
       customer_id: v.string(),

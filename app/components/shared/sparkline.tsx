@@ -1,4 +1,4 @@
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import { LineChart, Line } from 'recharts';
 
 export function Sparkline({ data }: { data: number[] }) {
   const points = data.map((v, i) => ({ v, i }));

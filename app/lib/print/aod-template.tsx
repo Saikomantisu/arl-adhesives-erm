@@ -27,7 +27,7 @@ export function buildAodHtml({
   html: string;
   extraCss: string;
 } {
-  const printedDate = new Date(aod.printed_at).toLocaleDateString('en-UK', {
+  const printedDate = new Date(aod.printed_at).toLocaleDateString('en-GB', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -45,7 +45,7 @@ export function buildAodHtml({
           <td class="border border-black p-2 text-center h-[80px]"></td>
           <td class="border border-black p-2 h-[80px]">
             ${name}<br />
-            Make : Malayasia<br />
+            Make : Malaysia<br />
             Brand : Adtek
           </td>
           <td class="border border-black p-2 text-center h-[80px]">${qty}</td>
@@ -85,7 +85,7 @@ export function buildAodHtml({
             <div class="font-bold underline mb-1">Consignee:</div>
             <p class="leading-relaxed w-[200px]">
               ${escapeHtml(customer?.company)}<br />
-              ${customer?.address}
+              ${escapeHtml(customer?.address)}
             </p>
           </div>
 
@@ -135,12 +135,11 @@ export function buildAodHtml({
         </table>
 
         <div class="mt-8 text-[13px] leading-relaxed max-w-[90%]">
-          Any discrepancy on quality or quantity of goods received should be informed us within 24
-          hours of the delivery or it would be considered as correct and we shall not be liable for
-          same.
+          Any discrepancy in the quality or quantity of goods received must be reported within 24
+          hours of delivery. Otherwise, the delivery will be treated as accepted and correct.
         </div>
 
-        <div class="text-right mt-6 mb-4 text-sm">Good received are in order</div>
+        <div class="text-right mt-6 mb-4 text-sm">Goods received are in order</div>
 
         <div class="flex justify-between items-end mt-20 px-[5mm]">
           <div class="text-center">

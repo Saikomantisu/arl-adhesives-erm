@@ -1,87 +1,79 @@
-# Welcome to React Router!
+# ARL Adhesives ERM
 
-A modern, production-ready template for building full-stack React applications using React Router.
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+Internal ERP-style application for ARL Adhesives. The app covers day-to-day sales and inventory workflows, including invoice generation, quotation creation, advice of dispatch (AOD) printing, customer tracking, and stock visibility.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- Dashboard with revenue, outstanding payment, and stock-value KPIs
+- Inventory view with stock thresholds and velocity snapshots
+- Invoice creation with stock deduction and payment status tracking
+- Quotation creation with downloadable PDF output
+- AOD generation and print support for invoices
+- Customer directory with activity history
 
-## Getting Started
+## Stack
 
-### Installation
+- React Router 7
+- Convex
+- TanStack Query
+- Zustand
+- Tailwind CSS
+- Framer Motion
 
-Install the dependencies:
+## Local Setup
 
-```bash
-npm install
-```
+1. Install dependencies:
 
-### Development
+   ```bash
+   pnpm install
+   ```
 
-Start the development server with HMR:
+2. Add environment variables:
 
-```bash
-npm run dev
-```
+   ```bash
+   cp .env.example .env.local
+   ```
 
-Your application will be available at `http://localhost:5173`.
+3. Start Convex in development mode:
 
-## Building for Production
+   ```bash
+   pnpm convex:dev
+   ```
 
-Create a production build:
+4. Start the frontend:
 
-```bash
-npm run build
-```
+   ```bash
+   pnpm dev
+   ```
 
-## Deployment
+The app will be available at `http://localhost:5173`.
 
-### Docker Deployment
+## Environment
 
-To build and run using Docker:
+The project expects:
 
-```bash
-docker build -t my-app .
+- `VITE_CONVEX_URL`: Convex deployment URL used by the frontend client
 
-# Run the container
-docker run -p 3000:3000 my-app
-```
+See [`./.env.example`](./.env.example) for the expected shape.
 
-The containerized application can be deployed to any platform that supports Docker, including:
+## Project Structure
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+- [`app/`](./app): React Router frontend, UI components, routes, stores, and print helpers
+- [`convex/`](./convex): Convex schema, queries, mutations, and shared backend helpers
+- [`app/store/`](./app/store): Zustand draft and UI state
+- [`app/lib/print/`](./app/lib/print): PDF and print-specific rendering helpers
 
-### DIY Deployment
+## Commands
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
+- `pnpm dev`: Start the React Router development server
+- `pnpm convex:dev`: Start Convex development mode
+- `pnpm typecheck`: Generate route types and run TypeScript checks
+- `pnpm build`: Build the client and server bundles
+- `pnpm format`: Run Prettier and rewrite files
+- `pnpm format:check`: Check formatting without rewriting files
 
-Make sure to deploy the output of `npm run build`
+## Notes
 
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+- The current codebase is optimized for internal operations rather than a generalized multi-tenant ERP.
+- Lists are currently rendered as full collections rather than paginated views.
+- Document layouts are tuned for ARL Adhesives invoice, quotation, and AOD output.

@@ -1,5 +1,7 @@
-import { mutationGeneric, queryGeneric } from 'convex/server';
 import { v } from 'convex/values';
+import type { Id } from './_generated/dataModel';
+import type { MutationCtx } from './_generated/server';
+import { mutation, query } from './_generated/server';
 import {
   addOneMonthPreservingUtcDay,
   filterToMonth,
@@ -25,9 +27,9 @@ const invoiceItemInputValidator = v.object({
 });
 
 const createActivityRecord = async (
-  ctx: { db: any },
+  ctx: MutationCtx,
   params: {
-    customerId: any;
+    customerId: Id<'customers'>;
     type:
       | 'invoice_generated'
       | 'invoice_paid'
@@ -48,7 +50,7 @@ const createActivityRecord = async (
   });
 };
 
-export const list = queryGeneric({
+export const list = query({
   args: {
     monthTimestamp: v.optional(v.number()),
   },
@@ -62,7 +64,7 @@ export const list = queryGeneric({
   },
 });
 
-export const listDue = queryGeneric({
+export const listDue = query({
   args: {
     monthTimestamp: v.optional(v.number()),
   },
@@ -83,7 +85,7 @@ export const listDue = queryGeneric({
   },
 });
 
-export const itemsByInvoice = queryGeneric({
+export const itemsByInvoice = query({
   args: {
     invoiceId: v.string(),
   },
@@ -101,7 +103,7 @@ export const itemsByInvoice = queryGeneric({
   },
 });
 
-export const create = mutationGeneric({
+export const create = mutation({
   args: {
     invoice: v.object({
       customer_id: v.string(),
@@ -205,7 +207,7 @@ export const create = mutationGeneric({
   },
 });
 
-export const updateStatus = mutationGeneric({
+export const updateStatus = mutation({
   args: {
     invoiceId: v.string(),
     status: invoiceStatusValidator,
@@ -225,11 +227,7 @@ export const updateStatus = mutationGeneric({
     const activityMap: Record<
       'paid' | 'pending' | 'overdue',
       {
-        type:
-          | Extract<typeof activityTypeValidator.type, string>
-          | 'invoice_paid'
-          | 'invoice_pending'
-          | 'invoice_overdue';
+        type: 'invoice_paid' | 'invoice_pending' | 'invoice_overdue';
         description: string;
       }
     > = {
@@ -246,10 +244,7 @@ export const updateStatus = mutationGeneric({
 
     await createActivityRecord(ctx, {
       customerId: invoice.customerId,
-      type: activityMap[args.status].type as
-        | 'invoice_paid'
-        | 'invoice_pending'
-        | 'invoice_overdue',
+      type: activityMap[args.status].type,
       description: activityMap[args.status].description,
       refNumber: invoice.number,
       timestamp: Date.now(),

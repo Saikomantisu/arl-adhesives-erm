@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
     path: '/sales',
     children: [
       { label: 'Invoices', path: '/sales' },
-      { label: 'Quotation', path: '/sales/quotation' },
+      { label: 'Quotations', path: '/sales/quotation' },
       { label: 'New Sale', path: '/sales/new' },
     ],
   },

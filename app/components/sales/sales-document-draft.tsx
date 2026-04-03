@@ -71,15 +71,8 @@ export function SalesDocumentDraft({
 
   const customersQuery = useQuery(convexQuery(convexApi.customers.list, {}));
   const customers = (customersQuery.data ?? []) as Customer[];
-
-  const selectedCustomerQuery = useQuery(
-    convexQuery(
-      convexApi.customers.get,
-      customer_id ? { customerId: customer_id } : 'skip',
-    ),
-  );
-  const selectedCustomer = (selectedCustomerQuery.data ??
-    null) as Customer | null;
+  const selectedCustomer =
+    customers.find((customer) => customer.id === customer_id) ?? null;
 
   const handleCreate = async () => {
     if (!customer_id || (showPoNumber && !po_number) || isSubmitting) return;
@@ -147,7 +140,7 @@ export function SalesDocumentDraft({
           Customer
         </label>
         <Select
-          value={selectedCustomer?.company ?? ''}
+          value={customer_id ?? ''}
           onValueChange={(val) => setCustomer(val || null)}
         >
           <SelectTrigger
@@ -156,7 +149,9 @@ export function SalesDocumentDraft({
               isOverdue && 'border-rose-300 dark:border-rose-700',
             )}
           >
-            <SelectValue placeholder="Select a customer…" />
+            <SelectValue placeholder="Select a customer…">
+              {selectedCustomer?.company ?? null}
+            </SelectValue>
           </SelectTrigger>
 
           <SelectContent>
