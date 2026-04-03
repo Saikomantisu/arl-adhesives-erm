@@ -55,6 +55,23 @@ export default defineSchema({
     .index('by_created_at', ['createdAt'])
     .index('by_status', ['status']),
 
+  quotations: defineTable({
+    number: v.string(),
+    numberYear: v.optional(v.number()),
+    numberMonth: v.optional(v.number()),
+    numberSequence: v.optional(v.number()),
+    numberingVersion: numberingVersionValidator,
+    customerId: v.id('customers'),
+    createdAt: v.number(),
+    subtotal: v.number(),
+    tax: v.number(),
+    total: v.number(),
+    poNumber: v.optional(v.string()),
+  })
+    .index('by_number', ['number'])
+    .index('by_customer_id', ['customerId'])
+    .index('by_created_at', ['createdAt']),
+
   invoiceItems: defineTable({
     invoiceId: v.id('invoices'),
     productId: v.id('products'),
@@ -66,6 +83,18 @@ export default defineSchema({
     totalPrice: v.number(),
     createdAt: v.number(),
   }).index('by_invoice_id', ['invoiceId']),
+
+  quotationItems: defineTable({
+    quotationId: v.id('quotations'),
+    productId: v.id('products'),
+    name: v.string(),
+    quantity: v.number(),
+    productPrice: v.number(),
+    totalWeightKg: v.number(),
+    pricePerKg: v.number(),
+    totalPrice: v.number(),
+    createdAt: v.number(),
+  }).index('by_quotation_id', ['quotationId']),
 
   aods: defineTable({
     invoiceId: v.id('invoices'),

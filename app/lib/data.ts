@@ -54,6 +54,17 @@ export interface Invoice {
   po_number: string;
 }
 
+export interface Quotation {
+  id?: string;
+  number?: string;
+  customer_id: string;
+  created_at?: Date;
+  subtotal: number;
+  tax: number;
+  total: number;
+  po_number?: string | null;
+}
+
 export interface Aod {
   id?: string;
   invoice_id: string;
@@ -64,7 +75,7 @@ export interface Aod {
   created_at?: Date;
 }
 
-export interface InvoiceItem {
+export interface SalesLineItem {
   id?: string;
   product_id: string;
   name: string;
@@ -73,6 +84,14 @@ export interface InvoiceItem {
   total_weight_kg: number; // quantity * package_weight_kg
   price_per_kg: number; // Your base rate (e.g., 2750)
   total_price: number; // total_weight_kg * price_per_kg
+}
+
+export interface InvoiceItem extends SalesLineItem {
+  invoice_id?: string;
+}
+
+export interface QuotationItem extends SalesLineItem {
+  quotation_id?: string;
 }
 
 export const formatCurrency = (n: number) =>

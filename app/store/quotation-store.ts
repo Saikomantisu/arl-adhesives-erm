@@ -1,3 +1,3 @@
 import { createSalesDraftStore } from './create-sales-draft-store';
 
-export const useSaleStore = createSalesDraftStore();
+export const useQuotationStore = createSalesDraftStore();

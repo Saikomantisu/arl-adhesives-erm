@@ -7,7 +7,6 @@ import {
 import { Button } from '~/components/ui/button';
 import { Printer, ArrowLeft, FileText } from 'lucide-react';
 import {
-  invoiceFormatCurrency,
   type Aod,
   type Customer,
   type Invoice,
@@ -19,6 +18,7 @@ import { convexQuery } from '@convex-dev/react-query';
 import { generateAod } from '~/services/aod-service';
 import { buildAodHtml } from '~/lib/print/aod-template';
 import { convexApi } from '~/lib/convex';
+import { SalesDocumentTemplate } from '~/components/documents/sales-document-template';
 
 interface InvoicePreviewModalProps {
   invoice: Invoice | null;
@@ -68,19 +68,17 @@ export function InvoicePreviewModal({
   const updateScale = useCallback(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
-    const containerWidth = wrapper.clientWidth - 32; // subtract padding (16px each side)
-    const invoiceWidth = 794; // 210mm at 96dpi
-    const newScale =
+    const containerWidth = wrapper.clientWidth - 32;
+    const invoiceWidth = 794;
+    const nextScale =
       containerWidth < invoiceWidth ? containerWidth / invoiceWidth : 1;
-    setScale(newScale);
+    setScale(nextScale);
   }, []);
 
   useEffect(() => {
     if (!open) return;
 
-    // Initial calc after dialog opens
     const timer = setTimeout(updateScale, 50);
-
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
 
@@ -106,18 +104,17 @@ export function InvoicePreviewModal({
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
 
-    // Collect all stylesheets from the host page so Tailwind classes resolve
     const stylesheets = Array.from(document.styleSheets)
       .map((sheet) => {
         try {
-          if (sheet.href)
+          if (sheet.href) {
             return `<link rel="stylesheet" href="${sheet.href}" />`;
+          }
           const rules = Array.from(sheet.cssRules)
-            .map((r) => r.cssText)
+            .map((rule) => rule.cssText)
             .join('\n');
           return `<style>${rules}</style>`;
         } catch {
-          // CORS-blocked sheets — skip
           return sheet.href
             ? `<link rel="stylesheet" href="${sheet.href}" />`
             : '';
@@ -149,7 +146,6 @@ export function InvoicePreviewModal({
     };
   }, []);
 
-  // Iframe-based print: prints only the invoice, zero side-effects on the main page
   const handlePrint = useCallback(() => {
     const invoiceEl = invoiceRef.current;
     if (!invoiceEl) return;
@@ -191,10 +187,8 @@ export function InvoicePreviewModal({
           p-0 overflow-hidden border-none flex flex-col gap-0"
         showCloseButton={false}
       >
-        {/* Header toolbar */}
         <DialogHeader className="flex flex-row items-center justify-between border-b border-zinc-200 px-4 py-3 sm:px-6 sm:py-4 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
           <div className="flex items-center gap-3">
-            {/* Back arrow on mobile, hidden on desktop */}
             <button
               onClick={() => onOpenChange(false)}
               className="sm:hidden p-1 -ml-1 rounded-md text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
@@ -233,7 +227,6 @@ export function InvoicePreviewModal({
               <span className="sm:hidden">{aod ? 'AOD' : 'Gen AOD'}</span>
             </Button>
 
-            {/* Desktop close button */}
             <button
               onClick={() => onOpenChange(false)}
               className="hidden sm:flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -257,7 +250,6 @@ export function InvoicePreviewModal({
           </div>
         </DialogHeader>
 
-        {/* Scrollable invoice area */}
         <div
           ref={wrapperRef}
           className="flex-1 overflow-y-auto overflow-x-hidden bg-zinc-100 dark:bg-zinc-950/50 p-4 sm:p-8 flex justify-center"
@@ -266,193 +258,28 @@ export function InvoicePreviewModal({
             style={{
               transform: `scale(${scale})`,
               transformOrigin: 'top center',
-              // Reserve the scaled height so the scroll container knows the real size
               height: scale < 1 ? `calc(297mm * ${scale})` : undefined,
             }}
           >
-            {/* ===== INVOICE TEMPLATE — DO NOT EDIT BELOW THIS LINE ===== */}
-            <div
+            <SalesDocumentTemplate
               ref={invoiceRef}
-              className="invoice-page bg-white p-[15mm_20mm] shadow-sm text-black font-serif"
-            >
-              {/* Company Header */}
-              <header className="mb-4">
-                <h1 className="text-[26px] font-bold text-[#2a5f8f] underline leading-tight">
-                  ARL Adhesives
-                </h1>
-                <div className="text-[13px] italic text-[#2a5f8f] leading-normal">
-                  No.3/6A, Edirigoda Road, Nugegoda, Sri Lanka.
-                  <br />
-                  Phone : +94 777 767260, +94 777 766006
-                  <br />
-                  Email : arl.adhesives@gmail.com
-                </div>
-                <div className="text-[13px] italic text-[#2a5f8f] mt-1">
-                  VAT Registration Number: 103506638 - 7000
-                </div>
-              </header>
-
-              <div className="text-right italic text-sm mb-2">
-                Customer Copy
-              </div>
-
-              <h2 className="text-center text-2xl font-bold mb-8">
-                TAX- INVOICE
-              </h2>
-
-              {/* Info Section */}
-              <div className="flex justify-between mb-8 text-sm">
-                <div className="max-w-[50%]">
-                  <h3 className="font-bold underline mb-1 uppercase text-xs">
-                    Consignee:
-                  </h3>
-                  <p className="leading-relaxed">{customer?.company},</p>
-
-                  <p className="leading-relaxed w-[200px]">
-                    {customer?.address!}
-                  </p>
-
-                  <p className="leading-relaxed">
-                    VAT Registration No: {customer?.vat_reg_no}
-                  </p>
-                </div>
-
-                <div className="text-sm">
-                  <table className="border-collapse">
-                    <tbody>
-                      <tr>
-                        <td className="font-bold pr-2 py-0.5 whitespace-nowrap">
-                          Invoice No
-                        </td>
-                        <td>: {invoice.number}</td>
-                      </tr>
-                      <tr>
-                        <td className="font-bold pr-2 py-0.5 whitespace-nowrap">
-                          Date
-                        </td>
-                        <td>
-                          {new Date(invoice.created_at!).toLocaleDateString(
-                            'en-UK',
-                            {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                            },
-                          )}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="font-bold pr-2 py-0.5 whitespace-nowrap">
-                          P.O. No
-                        </td>
-                        <td>: {invoice.po_number}</td>
-                      </tr>
-                      <tr>
-                        <td className="font-bold pr-2 py-0.5 whitespace-nowrap">
-                          A.O.D. No
-                        </td>
-                        <td>: {aod?.aod_number ?? '—'}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Items Table */}
-              <table className="w-full border-collapse border border-black text-sm mb-8">
-                <thead>
-                  <tr className="font-bold text-center">
-                    <th className="border border-black p-2 w-[12%]">
-                      Item Code
-                    </th>
-                    <th className="border border-black p-2 w-[36%] text-left">
-                      Description
-                    </th>
-                    <th className="border border-black p-2 w-[12%]">Qty KGS</th>
-                    <th className="border border-black p-2 w-[18%]">
-                      Unit Price /SLR
-                    </th>
-                    <th className="border border-black p-2 w-[22%]">
-                      Total Value SLR
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items?.map((item) => (
-                    <tr className="h-24 align-top text-center">
-                      <td className="border border-black p-2"></td>
-                      <td className="border border-black p-2 text-left">
-                        {item.name}
-                        <br />
-                        Make : Malayasia
-                        <br />
-                        Brand : Adtek
-                      </td>
-                      <td className="border border-black p-2">
-                        {item.total_weight_kg}
-                      </td>
-                      <td className="border border-black p-2">
-                        {invoiceFormatCurrency(item.price_per_kg)}
-                      </td>
-                      <td className="border border-black p-2 text-right font-medium">
-                        {invoiceFormatCurrency(item.total_price)}
-                      </td>
-                    </tr>
-                  ))}
-
-                  {/* Totals */}
-                  <tr>
-                    <td colSpan={3} className="border-none"></td>
-                    <td className="border border-black p-2 text-center font-bold">
-                      Sub Total
-                    </td>
-                    <td className="border border-black p-2 text-right">
-                      {invoiceFormatCurrency(invoice.subtotal)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={3} className="border-none"></td>
-                    <td className="border border-black p-2 text-center font-bold">
-                      VAT 18%
-                    </td>
-                    <td className="border border-black p-2 text-right">
-                      {invoiceFormatCurrency(invoice.tax)}
-                    </td>
-                  </tr>
-                  <tr className="font-bold">
-                    <td colSpan={3} className="border-none"></td>
-                    <td className="border border-black p-2 text-center">
-                      Total :
-                    </td>
-                    <td className="border border-black p-2 text-right">
-                      {invoiceFormatCurrency(invoice.total)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              {/* Note */}
-              <div className="text-sm leading-relaxed mt-8">
-                Draw the cheque in favour of <strong>{customer?.payee}</strong>,
-                A/C payee only.
-              </div>
-
-              {/* Signature */}
-              <div className="flex flex-col items-end mt-20">
-                <div className="w-48 border-b border-black border-dotted mb-1"></div>
-                <span className="text-[13px] pr-8">Checked & Issued by</span>
-              </div>
-
-              {/* Footer pushes to bottom of A4 if content is small */}
-              <div className="mt-20">
-                <hr className="border-t-2 border-dashed border-black mb-3" />
-                <div className="text-center text-[10px] text-zinc-600">
-                  No. 3/6A, Edirigoda Road, Nugegoda. Tel. +94 777 766006, 777
-                  767260 Email: arl.adhesives@gmail.com
-                </div>
-              </div>
-            </div>
-            {/* ===== INVOICE TEMPLATE — DO NOT EDIT ABOVE THIS LINE ===== */}
+              documentTitle="TAX - INVOICE"
+              numberLabel="Invoice No"
+              number={invoice.number}
+              createdAt={invoice.created_at}
+              poNumber={invoice.po_number}
+              customer={customer}
+              items={items}
+              subtotal={invoice.subtotal}
+              tax={invoice.tax}
+              total={invoice.total}
+              extraRows={[
+                {
+                  label: 'A.O.D. No',
+                  value: aod?.aod_number ?? '—',
+                },
+              ]}
+            />
           </div>
         </div>
       </DialogContent>

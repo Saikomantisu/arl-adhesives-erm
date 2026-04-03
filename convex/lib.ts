@@ -1,4 +1,5 @@
 const INVOICE_NUMBER_REGEX = /^ARL\/IN-(\d{2})\/(\d{2})\/(\d{2})$/;
+const QUOTATION_NUMBER_REGEX = /^ARL\/QTN-(\d{2})\/(\d{2})\/(\d{2})$/;
 const AOD_NUMBER_REGEX = /^ARL\/AOD-(\d{2})\/(\d{2})\/(\d{2})$/;
 
 export const getById = async (
@@ -27,6 +28,9 @@ export const requireById = async (
 export const parseInvoiceNumber = (value?: string | null) =>
   parseDocumentNumber(value, INVOICE_NUMBER_REGEX);
 
+export const parseQuotationNumber = (value?: string | null) =>
+  parseDocumentNumber(value, QUOTATION_NUMBER_REGEX);
+
 export const parseAodNumber = (value?: string | null) =>
   parseDocumentNumber(value, AOD_NUMBER_REGEX);
 
@@ -48,6 +52,9 @@ const parseDocumentNumber = (
 
 export const formatInvoiceNumber = (timestamp: number, sequence: number) =>
   `ARL/IN-${formatNumberParts(timestamp, sequence)}`;
+
+export const formatQuotationNumber = (timestamp: number, sequence: number) =>
+  `ARL/QTN-${formatNumberParts(timestamp, sequence)}`;
 
 export const formatAodNumber = (timestamp: number, sequence: number) =>
   `ARL/AOD-${formatNumberParts(timestamp, sequence)}`;
@@ -97,7 +104,7 @@ export const addOneMonthPreservingUtcDay = (timestamp: number) => {
 
 export const takeNextSequence = async (
   ctx: { db: any },
-  scope: 'invoice' | 'aod',
+  scope: 'invoice' | 'quotation' | 'aod',
   year: number,
 ) => {
   const existing = await ctx.db
@@ -130,7 +137,7 @@ export const takeNextSequence = async (
 
 export const setSequenceNextValue = async (
   ctx: { db: any },
-  scope: 'invoice' | 'aod',
+  scope: 'invoice' | 'quotation' | 'aod',
   year: number,
   nextValue: number,
 ) => {
@@ -195,9 +202,33 @@ export const mapInvoice = (doc: any) => ({
   po_number: doc.poNumber,
 });
 
+export const mapQuotation = (doc: any) => ({
+  id: doc._id,
+  number: doc.number,
+  customer_id: doc.customerId,
+  created_at: doc.createdAt,
+  subtotal: Number(doc.subtotal ?? 0),
+  tax: Number(doc.tax ?? 0),
+  total: Number(doc.total ?? 0),
+  po_number: doc.poNumber ?? null,
+});
+
 export const mapInvoiceItem = (doc: any) => ({
   id: doc._id,
   invoice_id: doc.invoiceId,
+  product_id: doc.productId,
+  name: doc.name,
+  quantity: Number(doc.quantity ?? 0),
+  product_price: Number(doc.productPrice ?? 0),
+  total_weight_kg: Number(doc.totalWeightKg ?? 0),
+  price_per_kg: Number(doc.pricePerKg ?? 0),
+  total_price: Number(doc.totalPrice ?? 0),
+  created_at: doc.createdAt,
+});
+
+export const mapQuotationItem = (doc: any) => ({
+  id: doc._id,
+  quotation_id: doc.quotationId,
   product_id: doc.productId,
   name: doc.name,
   quantity: Number(doc.quantity ?? 0),
