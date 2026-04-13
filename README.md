@@ -73,6 +73,18 @@ Set `CLERK_SECRET_KEY` as a runtime environment variable on the production serve
 
 See [`./.env.example`](./.env.example) for the expected shape.
 
+### Production Clerk and Convex auth
+
+If production sign-in works but Convex data stays empty, check the production Clerk application first:
+
+- Activate the Clerk Convex integration in the production Clerk app, or create a JWT template named `convex`.
+- Confirm the production frontend uses the production `VITE_CLERK_PUBLISHABLE_KEY`.
+- Confirm the production Convex deployment has `CLERK_JWT_ISSUER_DOMAIN` set to the same Clerk Frontend API URL used by that production Clerk app.
+- Deploy Convex after changing `CLERK_JWT_ISSUER_DOMAIN` or `convex/auth.config.ts`.
+- Sign out completely and sign back in after changing Clerk JWT settings.
+
+Requests to `/tokens/convex` returning 404 usually mean the signed-in Clerk app cannot issue a `convex` token for the current production session.
+
 ## Project Structure
 
 - [`app/`](./app): React Router frontend, UI components, routes, stores, and print helpers

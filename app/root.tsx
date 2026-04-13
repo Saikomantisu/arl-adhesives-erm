@@ -7,7 +7,12 @@ import {
   ScrollRestoration,
 } from 'react-router';
 import type { Route } from './+types/root';
-import { ClerkProvider, SignInButton, useAuth } from '@clerk/react-router';
+import {
+  ClerkProvider,
+  SignInButton,
+  SignOutButton,
+  useAuth,
+} from '@clerk/react-router';
 import { clerkMiddleware, rootAuthLoader } from '@clerk/react-router/server';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useConvexAuth } from 'convex/react';
@@ -82,10 +87,14 @@ function ClerkAuthGate() {
 }
 
 function AuthenticatedApp() {
-  const { isLoading } = useConvexAuth();
+  const { isLoading, isAuthenticated } = useConvexAuth();
 
   if (isLoading) {
     return <FullPageLoading />;
+  }
+
+  if (!isAuthenticated) {
+    return <FullPageAuthError />;
   }
 
   return (
@@ -124,6 +133,36 @@ function FullPageSignIn() {
             Sign in
           </button>
         </SignInButton>
+      </div>
+    </main>
+  );
+}
+
+function FullPageAuthError() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+      <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-5">
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            ARL Adhesives ERM
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            Could not load your workspace
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+            Your sign-in worked, but your session could not connect to the
+            database. Please sign out, then sign in again.
+          </p>
+        </div>
+
+        <SignOutButton>
+          <button
+            type="button"
+            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-zinc-300"
+          >
+            Sign out
+          </button>
+        </SignOutButton>
       </div>
     </main>
   );
