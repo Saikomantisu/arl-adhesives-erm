@@ -7,11 +7,24 @@ import {
   ScrollRestoration,
 } from 'react-router';
 import type { Route } from './+types/root';
+import { ClerkProvider, SignInButton, useAuth } from '@clerk/react-router';
+import { clerkMiddleware, rootAuthLoader } from '@clerk/react-router/server';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { useConvexAuth } from 'convex/react';
 import { ConvexAppProvider, queryClient } from '~/lib/convex';
 import './app.css';
 
+const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!clerkPublishableKey) {
+  throw new Error(
+    'Missing required environment variable VITE_CLERK_PUBLISHABLE_KEY',
+  );
+}
+
 export const links: Route.LinksFunction = () => [];
+export const middleware: Route.MiddlewareFunction[] = [clerkMiddleware()];
+export const loader = (args: Route.LoaderArgs) => rootAuthLoader(args);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,20 +36,97 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body suppressHydrationWarning>
-        <QueryClientProvider client={queryClient}>
-          <ConvexAppProvider>
-            <main>{children}</main>
-            <ScrollRestoration />
-            <Scripts />
-          </ConvexAppProvider>
-        </QueryClientProvider>
+        {children}
+        <ScrollRestoration />
+        <Scripts />
       </body>
     </html>
   );
 }
 
-export default function App() {
-  return <Outlet />;
+export default function App({ loaderData }: Route.ComponentProps) {
+  return (
+    <ClerkProvider
+      loaderData={loaderData}
+      publishableKey={clerkPublishableKey}
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
+      afterSignOutUrl="/"
+      appearance={{
+        elements: {
+          footerAction: 'hidden',
+        },
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ConvexAppProvider>
+          <ClerkAuthGate />
+        </ConvexAppProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
+  );
+}
+
+function ClerkAuthGate() {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (!isLoaded) {
+    return <FullPageLoading />;
+  }
+
+  if (!isSignedIn) {
+    return <FullPageSignIn />;
+  }
+
+  return <AuthenticatedApp />;
+}
+
+function AuthenticatedApp() {
+  const { isLoading } = useConvexAuth();
+
+  if (isLoading) {
+    return <FullPageLoading />;
+  }
+
+  return (
+    <main>
+      <Outlet />
+    </main>
+  );
+}
+
+function FullPageLoading() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400">
+      Loading...
+    </main>
+  );
+}
+
+function FullPageSignIn() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+      <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-5">
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            ARL Adhesives ERM
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            Sign in to continue
+          </h1>
+        </div>
+
+        <SignInButton mode="modal">
+          <button
+            type="button"
+            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-indigo-600 px-4 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+          >
+            Sign in
+          </button>
+        </SignInButton>
+      </div>
+    </main>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -19,10 +19,9 @@ import { ChevronDown, Eye, Plus } from 'lucide-react';
 import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { convexQuery } from '@convex-dev/react-query';
+import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { TopBar } from '~/components/layouts/top-bar';
 import { Link, type MetaFunction } from 'react-router';
-import { updateInvoiceStatus } from '~/services/invoice-service';
 import { StatusBadge } from '~/components/shared/status-badge';
 import { SalesEmptyState } from '~/components/shared/empty-state';
 import {
@@ -57,10 +56,16 @@ function InvoiceRow({
     (inv.status as InvoiceStatus) ?? 'pending',
   );
   const statusUpdateLockedRef = useRef(false);
+  const updateInvoiceStatus = useConvexMutation(
+    convexApi.invoices.updateStatus,
+  );
 
   const updateStatusMutation = useMutation({
     mutationFn: (nextStatus: InvoiceStatus) =>
-      updateInvoiceStatus(inv.id!, nextStatus),
+      updateInvoiceStatus({
+        invoiceId: inv.id!,
+        status: nextStatus,
+      }),
     onError: () => {
       setStatus((inv.status as InvoiceStatus) ?? 'pending');
     },

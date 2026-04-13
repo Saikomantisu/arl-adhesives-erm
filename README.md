@@ -53,6 +53,23 @@ The app will be available at `http://localhost:5173`.
 The project expects:
 
 - `VITE_CONVEX_URL`: Convex deployment URL used by the frontend client
+- `VITE_CLERK_PUBLISHABLE_KEY`: Clerk publishable key used by the frontend
+- `CLERK_SECRET_KEY`: Clerk secret key used by the React Router server runtime
+- `CLERK_JWT_ISSUER_DOMAIN`: Clerk Frontend API URL used by Convex to validate Clerk JWTs
+
+Set `CLERK_JWT_ISSUER_DOMAIN` on the Convex deployment as well as in local server environment files. Convex codegen and deploy will fail until that deployment environment variable exists.
+
+Docker builds also need the public build-time values passed as build args:
+
+```bash
+docker build \
+  --build-arg VITE_CONVEX_URL="$VITE_CONVEX_URL" \
+  --build-arg VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" \
+  --build-arg CLERK_JWT_ISSUER_DOMAIN="$CLERK_JWT_ISSUER_DOMAIN" \
+  -t arl-adhesives-erm .
+```
+
+Set `CLERK_SECRET_KEY` as a runtime environment variable on the production server or container host.
 
 See [`./.env.example`](./.env.example) for the expected shape.
 

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { useState } from 'react';
+import { UserButton, useUser } from '@clerk/react-router';
 import { Button } from '~/components/ui/button';
 import { NavLink, useLocation } from 'react-router';
 import { Separator } from '~/components/ui/separator';
@@ -70,6 +71,7 @@ export function AppSidebar({
   const isMobile = variant === 'mobile';
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const setCollapsed = useUiStore((s) => s.setSidebarCollapsed);
+  const { user } = useUser();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([
     'Sales',
     'Inventory',
@@ -93,6 +95,10 @@ export function AppSidebar({
 
   // On mobile we always render the expanded sidebar.
   const effectiveCollapsed = isMobile ? false : collapsed;
+  const displayName =
+    user?.fullName ??
+    user?.primaryEmailAddress?.emailAddress ??
+    'Signed in user';
 
   return (
     <TooltipProvider>
@@ -285,25 +291,27 @@ export function AppSidebar({
         {/* Footer */}
         <div className="border-t border-zinc-100 p-3 dark:border-zinc-800">
           {effectiveCollapsed ? (
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full
-                bg-indigo-100 text-xs font-semibold text-indigo-700
-                dark:bg-indigo-900 dark:text-indigo-300"
-            >
-              R
+            <div className="flex h-8 w-8 items-center justify-center">
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: 'h-8 w-8',
+                  },
+                }}
+              />
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full
-                  bg-indigo-100 text-xs font-semibold text-indigo-700
-                  dark:bg-indigo-900 dark:text-indigo-300"
-              >
-                R
-              </div>
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: 'h-8 w-8',
+                  },
+                }}
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                  Ravinath Akalanka
+                  {displayName}
                 </p>
                 <p className="truncate text-xs text-zinc-500">Owner</p>
               </div>

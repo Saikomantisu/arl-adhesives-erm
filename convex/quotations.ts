@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { requireAuthenticatedUser } from './auth';
 import {
   filterToMonth,
   formatLkrCurrency,
@@ -26,6 +27,8 @@ export const list = query({
     monthTimestamp: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const quotations = await ctx.db
       .query('quotations')
       .withIndex('by_created_at')
@@ -41,6 +44,8 @@ export const itemsByQuotation = query({
     quotationId: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const quotation = await getById(ctx, 'quotations', args.quotationId);
     if (!quotation) return [];
 
@@ -66,6 +71,8 @@ export const create = mutation({
     quotationItems: v.array(quotationItemInputValidator),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     if (args.quotationItems.length === 0) {
       throw new Error('At least one quotation item is required');
     }

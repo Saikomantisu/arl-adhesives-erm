@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
+import { requireAuthenticatedUser } from './auth';
 import {
   addOneMonthPreservingUtcDay,
   filterToMonth,
@@ -55,6 +56,8 @@ export const list = query({
     monthTimestamp: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const invoices = await ctx.db
       .query('invoices')
       .withIndex('by_created_at')
@@ -69,6 +72,8 @@ export const listDue = query({
     monthTimestamp: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const pending = await ctx.db
       .query('invoices')
       .withIndex('by_status', (q) => q.eq('status', 'pending'))
@@ -90,6 +95,8 @@ export const itemsByInvoice = query({
     invoiceId: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const invoice = await getById(ctx, 'invoices', args.invoiceId);
     if (!invoice) return [];
 
@@ -115,6 +122,8 @@ export const create = mutation({
     invoiceItems: v.array(invoiceItemInputValidator),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     if (args.invoiceItems.length === 0) {
       throw new Error('At least one invoice item is required');
     }
@@ -213,6 +222,8 @@ export const updateStatus = mutation({
     status: invoiceStatusValidator,
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const invoice = await requireById(
       ctx,
       'invoices',

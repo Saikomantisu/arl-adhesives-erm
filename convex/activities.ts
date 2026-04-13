@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { requireAuthenticatedUser } from './auth';
 import { getById, mapActivity, requireById } from './lib';
 import { activityTypeValidator } from './model';
 
@@ -8,6 +9,8 @@ export const listByCustomer = query({
     customerId: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const customer = await getById(ctx, 'customers', args.customerId);
     if (!customer) return [];
 
@@ -29,6 +32,8 @@ export const create = mutation({
     refNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const customer = await requireById(
       ctx,
       'customers',
