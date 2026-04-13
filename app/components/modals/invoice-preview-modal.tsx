@@ -14,8 +14,7 @@ import {
 } from '~/lib/data';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { convexQuery } from '@convex-dev/react-query';
-import { generateAod } from '~/services/aod-service';
+import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { buildAodHtml } from '~/lib/print/aod-template';
 import {
   formatPrintDocumentTitle,
@@ -60,9 +59,10 @@ export function InvoicePreviewModal({
     ),
   );
   const aod = (aodQuery.data ?? null) as Aod | null;
+  const createAod = useConvexMutation(convexApi.aods.createForInvoice);
 
   const generateAodMutation = useMutation({
-    mutationFn: () => generateAod(invoice.id!),
+    mutationFn: () => createAod({ invoiceId: invoice.id! }),
   });
 
   const invoiceRef = useRef<HTMLDivElement>(null);

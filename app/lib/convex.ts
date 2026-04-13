@@ -1,15 +1,19 @@
 import { QueryClient } from '@tanstack/react-query';
 import { ConvexQueryClient } from '@convex-dev/react-query';
-import { ConvexHttpClient } from 'convex/browser';
-import { ConvexReactClient, ConvexProvider } from 'convex/react';
+import { useAuth } from '@clerk/react-router';
+import { ConvexReactClient } from 'convex/react';
+import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { createElement, type ReactNode } from 'react';
 import { api } from '../../convex/_generated/api';
 
-const convexUrl = import.meta.env.VITE_CONVEX_URL || 'https://example.invalid';
+const convexUrl = import.meta.env.VITE_CONVEX_URL;
+
+if (!convexUrl) {
+  throw new Error('Missing required environment variable VITE_CONVEX_URL');
+}
 
 export const convexApi = api;
 export const convexReactClient = new ConvexReactClient(convexUrl);
-export const convexHttpClient = new ConvexHttpClient(convexUrl);
 export const convexQueryClient = new ConvexQueryClient(convexReactClient);
 
 export const queryClient = new QueryClient({
@@ -26,5 +30,9 @@ export const queryClient = new QueryClient({
 convexQueryClient.connect(queryClient);
 
 export function ConvexAppProvider({ children }: { children: ReactNode }) {
-  return createElement(ConvexProvider, { client: convexReactClient }, children);
+  return createElement(ConvexProviderWithClerk, {
+    client: convexReactClient,
+    useAuth,
+    children,
+  });
 }

@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
+import { requireAuthenticatedUser } from './auth';
 import { formatAodNumber, getById, mapAod, takeNextSequence } from './lib';
 
 const createActivityRecord = async (
@@ -28,6 +29,8 @@ export const getByInvoice = query({
     invoiceId: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const invoice = await getById(ctx, 'invoices', args.invoiceId);
     if (!invoice) return null;
 
@@ -45,6 +48,8 @@ export const createForInvoice = mutation({
     invoiceId: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
     const invoice = await getById(ctx, 'invoices', args.invoiceId);
     if (!invoice) throw new Error(`Invoice ${args.invoiceId} not found`);
 

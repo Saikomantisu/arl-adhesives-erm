@@ -1,8 +1,11 @@
+import { useConvexMutation } from '@convex-dev/react-query';
 import { SalesDocumentDraft } from '~/components/sales/sales-document-draft';
-import { generateInvoice } from '~/services/invoice-service';
+import { convexApi } from '~/lib/convex';
 import { useSaleStore } from '~/store/sales-store';
 
 export function InvoiceDraft() {
+  const createInvoice = useConvexMutation(convexApi.invoices.create);
+
   return (
     <SalesDocumentDraft
       title="Invoice"
@@ -11,13 +14,16 @@ export function InvoiceDraft() {
       successPath="/sales"
       useDraftStore={useSaleStore}
       createDocument={(document, items) =>
-        generateInvoice(
-          {
-            ...document,
+        createInvoice({
+          invoice: {
+            customer_id: document.customer_id,
             po_number: document.po_number ?? '',
+            subtotal: document.subtotal,
+            tax: document.tax,
+            total: document.total,
           },
-          items,
-        )
+          invoiceItems: items,
+        })
       }
     />
   );
