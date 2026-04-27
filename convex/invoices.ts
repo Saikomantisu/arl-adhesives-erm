@@ -10,6 +10,7 @@ import {
   formatInvoiceNumber,
   formatLkrCurrency,
   getById,
+  LIFETIME_VALUE_REBUILD_TASK_NAME,
   mapInvoice,
   mapInvoiceItem,
   requireById,
@@ -117,6 +118,18 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     await requireAuthenticatedUser(ctx);
+
+    const rebuildJob = await ctx.db
+      .query('maintenanceJobs')
+      .withIndex('by_task_name', (q) =>
+        q.eq('taskName', LIFETIME_VALUE_REBUILD_TASK_NAME),
+      )
+      .unique();
+    if (rebuildJob?.status === 'running') {
+      throw new Error(
+        'Customer lifetime value rebuild is in progress. Wait for it to finish before creating a new invoice.',
+      );
+    }
 
     if (args.invoiceItems.length === 0) {
       throw new Error('At least one invoice item is required');

@@ -113,6 +113,23 @@ export interface CustomerProductPrice {
   updated_at?: number;
 }
 
+export interface MaintenanceJobStatus {
+  task_name: string;
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  phase:
+    | 'idle'
+    | 'resetting_customers'
+    | 'processing_invoices'
+    | 'completed'
+    | 'failed';
+  processed_customers: number;
+  processed_invoices: number;
+  error: string | null;
+  started_at: number | null;
+  finished_at: number | null;
+  updated_at: number | null;
+}
+
 export const formatCurrency = (n: number) =>
   new Intl.NumberFormat('en-GB', {
     style: 'currency',

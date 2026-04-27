@@ -7,6 +7,7 @@ const AOD_NUMBER_REGEX = /^ARL\/AOD-(\d{2})\/(\d{2})\/(\d{2})$/;
 
 type DbCtx = QueryCtx | MutationCtx;
 const TAX_RATE = 0.18;
+export const LIFETIME_VALUE_REBUILD_TASK_NAME = 'customer_lifetime_value_rebuild';
 
 export const getById = async <T extends TableNames>(
   ctx: DbCtx,

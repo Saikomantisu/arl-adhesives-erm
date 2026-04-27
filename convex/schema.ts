@@ -138,4 +138,28 @@ export default defineSchema({
     nextValue: v.number(),
     updatedAt: v.number(),
   }).index('by_scope_year', ['scope', 'year']),
+
+  maintenanceJobs: defineTable({
+    taskName: v.string(),
+    status: v.union(
+      v.literal('idle'),
+      v.literal('running'),
+      v.literal('completed'),
+      v.literal('failed'),
+    ),
+    phase: v.union(
+      v.literal('idle'),
+      v.literal('resetting_customers'),
+      v.literal('processing_invoices'),
+      v.literal('completed'),
+      v.literal('failed'),
+    ),
+    cursor: v.union(v.string(), v.null()),
+    processedCustomers: v.number(),
+    processedInvoices: v.number(),
+    error: v.union(v.string(), v.null()),
+    startedAt: v.union(v.number(), v.null()),
+    finishedAt: v.union(v.number(), v.null()),
+    updatedAt: v.number(),
+  }).index('by_task_name', ['taskName']),
 });
