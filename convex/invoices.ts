@@ -5,6 +5,7 @@ import { mutation, query } from './_generated/server';
 import { requireAuthenticatedUser } from './auth';
 import {
   addOneMonthPreservingUtcDay,
+  computeSalesTotals,
   filterToMonth,
   formatInvoiceNumber,
   formatLkrCurrency,
@@ -12,6 +13,7 @@ import {
   mapInvoice,
   mapInvoiceItem,
   requireById,
+  resolveEffectivePricePerKg,
   sortByCreatedAtDesc,
   takeNextSequence,
 } from './lib';
@@ -19,12 +21,7 @@ import { activityTypeValidator, invoiceStatusValidator } from './model';
 
 const invoiceItemInputValidator = v.object({
   product_id: v.string(),
-  name: v.string(),
   quantity: v.number(),
-  product_price: v.number(),
-  total_weight_kg: v.number(),
-  price_per_kg: v.number(),
-  total_price: v.number(),
 });
 
 const createActivityRecord = async (
@@ -114,9 +111,6 @@ export const create = mutation({
   args: {
     invoice: v.object({
       customer_id: v.string(),
-      subtotal: v.number(),
-      tax: v.number(),
-      total: v.number(),
       po_number: v.string(),
     }),
     invoiceItems: v.array(invoiceItemInputValidator),
@@ -137,6 +131,10 @@ export const create = mutation({
 
     const resolvedItems = await Promise.all(
       args.invoiceItems.map(async (item) => {
+        if (item.quantity <= 0) {
+          throw new Error('Invoice item quantity must be greater than 0');
+        }
+
         const product = await requireById(
           ctx,
           'products',
@@ -150,8 +148,30 @@ export const create = mutation({
           throw new Error(`Insufficient stock for ${product.name}`);
         }
 
-        return { item, product, remainingStock };
+        const pricePerKg = await resolveEffectivePricePerKg(
+          ctx,
+          customer._id,
+          product._id,
+          Number(product.pricePerKg ?? 0),
+        );
+        const totalWeightKg = item.quantity * Number(product.packageWeightKg ?? 0);
+        const productPrice = pricePerKg * Number(product.packageWeightKg ?? 0);
+        const totalPrice = item.quantity * productPrice;
+
+        return {
+          item,
+          product,
+          remainingStock,
+          pricePerKg,
+          productPrice,
+          totalWeightKg,
+          totalPrice,
+        };
       }),
+    );
+
+    const { subtotal, tax, total } = computeSalesTotals(
+      resolvedItems.reduce((sum, item) => sum + item.totalPrice, 0),
     );
 
     const timestamp = Date.now();
@@ -177,9 +197,9 @@ export const create = mutation({
       status: 'pending',
       createdAt: timestamp,
       dueDate: addOneMonthPreservingUtcDay(timestamp),
-      subtotal: args.invoice.subtotal,
-      tax: args.invoice.tax,
-      total: args.invoice.total,
+      subtotal,
+      tax,
+      total,
       poNumber: args.invoice.po_number,
     });
 
@@ -187,12 +207,12 @@ export const create = mutation({
       await ctx.db.insert('invoiceItems', {
         invoiceId,
         productId: resolved.product._id,
-        name: resolved.item.name,
+        name: resolved.product.name,
         quantity: resolved.item.quantity,
-        productPrice: resolved.item.product_price,
-        totalWeightKg: resolved.item.total_weight_kg,
-        pricePerKg: resolved.item.price_per_kg,
-        totalPrice: resolved.item.total_price,
+        productPrice: resolved.productPrice,
+        totalWeightKg: resolved.totalWeightKg,
+        pricePerKg: resolved.pricePerKg,
+        totalPrice: resolved.totalPrice,
         createdAt: timestamp,
       });
 
@@ -202,10 +222,15 @@ export const create = mutation({
       });
     }
 
+    await ctx.db.patch(customer._id, {
+      lifetimeValue: Number(customer.lifetimeValue ?? 0) + subtotal,
+      updatedAt: timestamp,
+    });
+
     await createActivityRecord(ctx, {
       customerId: customer._id,
       type: 'invoice_generated',
-      description: `Invoice ${number} generated for PO ${args.invoice.po_number} (total ${formatLkrCurrency(args.invoice.total)}).`,
+      description: `Invoice ${number} generated for PO ${args.invoice.po_number} (total ${formatLkrCurrency(total)}).`,
       refNumber: number,
       timestamp,
     });

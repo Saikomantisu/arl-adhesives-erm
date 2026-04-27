@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { requireAuthenticatedUser } from './auth';
 import {
+  computeSalesTotals,
   filterToMonth,
   formatLkrCurrency,
   formatQuotationNumber,
@@ -9,17 +10,13 @@ import {
   mapQuotation,
   mapQuotationItem,
   requireById,
+  resolveEffectivePricePerKg,
   takeNextSequence,
 } from './lib';
 
 const quotationItemInputValidator = v.object({
   product_id: v.string(),
-  name: v.string(),
   quantity: v.number(),
-  product_price: v.number(),
-  total_weight_kg: v.number(),
-  price_per_kg: v.number(),
-  total_price: v.number(),
 });
 
 export const list = query({
@@ -63,9 +60,6 @@ export const create = mutation({
   args: {
     quotation: v.object({
       customer_id: v.string(),
-      subtotal: v.number(),
-      tax: v.number(),
-      total: v.number(),
       po_number: v.optional(v.string()),
     }),
     quotationItems: v.array(quotationItemInputValidator),
@@ -86,6 +80,10 @@ export const create = mutation({
 
     const resolvedItems = await Promise.all(
       args.quotationItems.map(async (item) => {
+        if (item.quantity <= 0) {
+          throw new Error('Quotation item quantity must be greater than 0');
+        }
+
         const product = await requireById(
           ctx,
           'products',
@@ -93,8 +91,29 @@ export const create = mutation({
           `Product ${item.product_id} not found`,
         );
 
-        return { item, product };
+        const pricePerKg = await resolveEffectivePricePerKg(
+          ctx,
+          customer._id,
+          product._id,
+          Number(product.pricePerKg ?? 0),
+        );
+        const totalWeightKg = item.quantity * Number(product.packageWeightKg ?? 0);
+        const productPrice = pricePerKg * Number(product.packageWeightKg ?? 0);
+        const totalPrice = item.quantity * productPrice;
+
+        return {
+          item,
+          product,
+          pricePerKg,
+          productPrice,
+          totalWeightKg,
+          totalPrice,
+        };
       }),
+    );
+
+    const { subtotal, tax, total } = computeSalesTotals(
+      resolvedItems.reduce((sum, item) => sum + item.totalPrice, 0),
     );
 
     const timestamp = Date.now();
@@ -118,9 +137,9 @@ export const create = mutation({
       numberingVersion: 'yearly_continuous',
       customerId: customer._id,
       createdAt: timestamp,
-      subtotal: args.quotation.subtotal,
-      tax: args.quotation.tax,
-      total: args.quotation.total,
+      subtotal,
+      tax,
+      total,
       poNumber: args.quotation.po_number,
     });
 
@@ -128,12 +147,12 @@ export const create = mutation({
       await ctx.db.insert('quotationItems', {
         quotationId,
         productId: resolved.product._id,
-        name: resolved.item.name,
+        name: resolved.product.name,
         quantity: resolved.item.quantity,
-        productPrice: resolved.item.product_price,
-        totalWeightKg: resolved.item.total_weight_kg,
-        pricePerKg: resolved.item.price_per_kg,
-        totalPrice: resolved.item.total_price,
+        productPrice: resolved.productPrice,
+        totalWeightKg: resolved.totalWeightKg,
+        pricePerKg: resolved.pricePerKg,
+        totalPrice: resolved.totalPrice,
         createdAt: timestamp,
       });
     }
@@ -141,7 +160,7 @@ export const create = mutation({
     await ctx.db.insert('activities', {
       customerId: customer._id,
       type: 'quotation_generated',
-      description: `Quotation ${number} generated (total ${formatLkrCurrency(args.quotation.total)}).`,
+      description: `Quotation ${number} generated (total ${formatLkrCurrency(total)}).`,
       refNumber: number,
       timestamp,
       updatedAt: timestamp,

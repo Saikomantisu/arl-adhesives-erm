@@ -16,7 +16,11 @@ import {
 import { clerkMiddleware, rootAuthLoader } from '@clerk/react-router/server';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useConvexAuth } from 'convex/react';
-import { ConvexAppProvider, queryClient } from '~/lib/convex';
+import {
+  ConvexAppProvider,
+  queryClient,
+  useConvexAuthDiagnostic,
+} from '~/lib/convex';
 import './app.css';
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -139,6 +143,8 @@ function FullPageSignIn() {
 }
 
 function FullPageAuthError() {
+  const diagnostic = useConvexAuthDiagnostic();
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
       <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -153,6 +159,17 @@ function FullPageAuthError() {
             Your sign-in worked, but your session could not connect to the
             database. Please sign out, then sign in again.
           </p>
+          {diagnostic ? (
+            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100">
+              <p>{diagnostic.detail}</p>
+              <p className="mt-2">{diagnostic.hint}</p>
+            </div>
+          ) : (
+            <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400">
+              If the problem persists, verify the Clerk-to-Convex JWT template
+              configuration for this environment.
+            </p>
+          )}
         </div>
 
         <SignOutButton>
