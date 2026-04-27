@@ -19,7 +19,7 @@ export default function DashboardLayout() {
         <SheetContent
           side="left"
           showCloseButton={false}
-          className="p-0 w-80 max-w-[85vw]"
+          className="p-0 w-full max-w-full border-r-0 sm:max-w-full"
         >
           <AppSidebar
             variant="mobile"

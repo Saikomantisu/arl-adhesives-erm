@@ -8,9 +8,10 @@ import {
   Plus,
   Settings,
   Zap,
+  X,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { UserButton, useUser } from '@clerk/react-router';
 import { Button } from '~/components/ui/button';
 import { NavLink, useLocation } from 'react-router';
@@ -79,6 +80,7 @@ export function AppSidebar({
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const setCollapsed = useUiStore((s) => s.setSidebarCollapsed);
   const { user } = useUser();
+  const mobileNavTitleId = useId();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([
     'Sales',
     'Inventory',
@@ -107,31 +109,75 @@ export function AppSidebar({
     user?.primaryEmailAddress?.emailAddress ??
     'Signed in user';
 
+  const mobileNavItemClass = isMobile
+    ? 'min-h-11 items-center py-2'
+    : 'h-9';
+  const mobileSubItemClass = isMobile
+    ? 'min-h-11 items-center py-2 text-sm pl-10 pr-3'
+    : 'h-8 pl-8 pr-2 text-[13px]';
+  const mobileNewSaleClass = isMobile
+    ? 'min-h-11 justify-center gap-2 py-2.5 text-base font-medium'
+    : 'py-2 text-sm';
+  const mobileCollapsedCta = isMobile
+    ? 'min-h-11 min-w-11 p-0'
+    : 'h-9 w-9';
+
   return (
     <TooltipProvider>
+      <span id={mobileNavTitleId} className="sr-only">
+        Main navigation
+      </span>
       <aside
+        aria-labelledby={mobileNavTitleId}
         className={cn(
           isMobile
-            ? 'flex h-full flex-col'
+            ? 'flex h-full min-h-0 w-full min-w-0 max-w-full flex-col border-0 bg-white pt-[env(safe-area-inset-top,0px)] dark:bg-zinc-950'
             : 'fixed left-0 top-0 z-40 flex h-screen flex-col',
-          'border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950',
-          effectiveCollapsed ? 'w-16' : 'w-64',
+          !isMobile && 'border-r border-zinc-200 dark:border-zinc-800',
+          !isMobile && (effectiveCollapsed ? 'w-16' : 'w-64'),
         )}
       >
         {/* Header */}
-        <div className="flex h-14 items-center justify-between px-3">
+        <div
+          className={cn(
+            'flex shrink-0 items-center justify-between',
+            isMobile
+              ? 'min-h-14 gap-2 px-3 py-2'
+              : 'h-14 px-3',
+          )}
+        >
           {!effectiveCollapsed && (
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <div
-                className="flex h-8 w-8 items-center justify-center
-                  rounded-lg bg-indigo-600 text-white"
+                className={cn(
+                  'flex shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white',
+                  isMobile ? 'h-10 w-10' : 'h-8 w-8',
+                )}
               >
-                <Zap className="h-4 w-4" />
+                <Zap className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />
               </div>
-              <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <span
+                className={cn(
+                  'font-semibold tracking-tight text-zinc-900 dark:text-zinc-50',
+                  isMobile ? 'truncate text-base' : 'text-sm',
+                )}
+              >
                 ARL Adhesives
               </span>
             </div>
+          )}
+
+          {isMobile && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 shrink-0 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50"
+              onClick={handleNavigate}
+              aria-label="Close navigation menu"
+            >
+              <X className="h-6 w-6" strokeWidth={2} />
+            </Button>
           )}
 
           {!isMobile && (
@@ -155,16 +201,22 @@ export function AppSidebar({
         <Separator className="bg-zinc-100 dark:bg-zinc-800" />
 
         {/* Quick Action */}
-        <div className="px-3 pt-3">
+        <div className={cn('px-3', isMobile ? 'pt-2' : 'pt-3')}>
           {effectiveCollapsed ? (
             <Tooltip>
               <TooltipTrigger>
                 <NavLink
                   to="/sales/new"
                   onClick={handleNavigate}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+                  className={cn(
+                    'inline-flex items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700',
+                    mobileCollapsedCta,
+                  )}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus
+                    className={isMobile ? 'h-5 w-5' : 'h-4 w-4'}
+                    aria-hidden
+                  />
                 </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right">New Sale</TooltipContent>
@@ -173,23 +225,41 @@ export function AppSidebar({
             <NavLink
               to="/sales/new"
               onClick={handleNavigate}
-              className="inline-flex w-full items-center justify-start gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className={cn(
+                'inline-flex w-full items-center justify-start gap-2 rounded-md bg-indigo-600 px-4 text-white hover:bg-indigo-700',
+                mobileNewSaleClass,
+              )}
             >
-              <Plus className="h-4 w-4" />
+              <Plus
+                className={isMobile ? 'h-5 w-5' : 'h-4 w-4'}
+                aria-hidden
+              />
               New Sale
             </NavLink>
           )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3">
-          <ul className="space-y-1">
+        <nav
+          aria-label="Primary"
+          className={cn(
+            'flex-1 overflow-y-auto overscroll-y-contain px-3 py-3',
+            isMobile && 'min-h-0',
+          )}
+        >
+          <ul className={cn('space-y-1', isMobile && 'space-y-1.5')}>
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item);
               const isExpanded = expandedGroups.includes(item.label);
               const hasChildren = !!item.children;
               const type = item.type ?? 'button';
+              const subnavId = `subnav-${item.label.replace(/\s+/g, '-').toLowerCase()}`;
+              const iconSize = isMobile ? 'h-5 w-5' : 'h-4 w-4';
+              const chevronSize = isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5';
+              const rowInteractive = isMobile
+                ? 'touch-manipulation active:bg-zinc-100 dark:active:bg-zinc-800'
+                : '';
 
               return (
                 <li key={item.label}>
@@ -200,13 +270,17 @@ export function AppSidebar({
                           to={item.path}
                           onClick={handleNavigate}
                           className={cn(
-                            'flex h-9 w-9 items-center justify-center rounded-md transition-colors',
+                            'flex items-center justify-center rounded-md transition-colors',
+                            isMobile
+                              ? 'min-h-11 min-w-11 p-0'
+                              : 'h-9 w-9',
                             active
                               ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
                               : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
+                            rowInteractive,
                           )}
                         >
-                          <Icon className="h-4 w-4" />
+                          <Icon className={iconSize} />
                         </NavLink>
                       </TooltipTrigger>
                       <TooltipContent side="right">{item.label}</TooltipContent>
@@ -218,20 +292,25 @@ export function AppSidebar({
                           to={item.path}
                           onClick={handleNavigate}
                           className={cn(
-                            'flex w-full items-center gap-2 rounded-md px-2 h-9 text-sm font-medium transition-colors',
+                            'flex w-full items-center gap-2 rounded-md px-2 text-sm font-medium transition-colors',
+                            mobileNavItemClass,
                             active
                               ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
                               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
+                            rowInteractive,
+                            isMobile && 'text-base',
                           )}
                         >
-                          <Icon className="h-4 w-4 shrink-0" />
+                          <Icon className={cn(iconSize, 'shrink-0')} />
                           <span className="flex-1 text-left">{item.label}</span>
                           {hasChildren && (
                             <ChevronDown
                               className={cn(
-                                'h-3.5 w-3.5 transition-transform',
+                                chevronSize,
+                                'shrink-0 transition-transform',
                                 isExpanded && 'rotate-180',
                               )}
+                              aria-hidden
                               onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
@@ -242,30 +321,40 @@ export function AppSidebar({
                         </NavLink>
                       ) : (
                         <button
+                          type="button"
+                          aria-expanded={hasChildren ? isExpanded : undefined}
+                          aria-controls={hasChildren ? subnavId : undefined}
                           onClick={() =>
                             hasChildren ? toggleGroup(item.label) : undefined
                           }
                           className={cn(
-                            'flex w-full items-center gap-2 rounded-md px-2 h-9 text-sm font-medium transition-colors',
+                            'flex w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium transition-colors',
+                            mobileNavItemClass,
                             active
                               ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
                               : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
+                            rowInteractive,
+                            isMobile && 'text-base',
                           )}
                         >
-                          <Icon className="h-4 w-4 shrink-0" />
-                          <span className="flex-1 text-left">{item.label}</span>
+                          <Icon className={cn(iconSize, 'shrink-0')} />
+                          <span className="min-w-0 flex-1 text-left">
+                            {item.label}
+                          </span>
                           {hasChildren && (
                             <ChevronDown
                               className={cn(
-                                'h-3.5 w-3.5 transition-transform',
+                                chevronSize,
+                                'shrink-0 transition-transform',
                                 isExpanded && 'rotate-180',
                               )}
+                              aria-hidden
                             />
                           )}
                         </button>
                       )}
                       {hasChildren && isExpanded && (
-                        <ul className="overflow-hidden">
+                        <ul id={subnavId} className="overflow-hidden">
                           {item.children!.map((child) => (
                             <li key={child.path + child.label}>
                               <NavLink
@@ -274,7 +363,9 @@ export function AppSidebar({
                                 onClick={handleNavigate}
                                 className={({ isActive }) =>
                                   cn(
-                                    'flex h-8 w-full items-center rounded-md pl-8 pr-2 text-[13px] transition-colors',
+                                    'flex w-full items-center rounded-md transition-colors',
+                                    mobileSubItemClass,
+                                    rowInteractive,
                                     isActive
                                       ? 'text-indigo-600 dark:text-indigo-400'
                                       : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-200',
@@ -296,31 +387,60 @@ export function AppSidebar({
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-zinc-100 p-3 dark:border-zinc-800">
+        <div
+          className={cn(
+            'border-t border-zinc-100 dark:border-zinc-800',
+            isMobile
+              ? 'p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]'
+              : 'p-3',
+          )}
+        >
           {effectiveCollapsed ? (
-            <div className="flex h-8 w-8 items-center justify-center">
+            <div
+              className={cn(
+                'flex items-center justify-center',
+                isMobile ? 'min-h-11 min-w-11' : 'h-8 w-8',
+              )}
+            >
               <UserButton
                 appearance={{
                   elements: {
-                    userButtonAvatarBox: 'h-8 w-8',
+                    userButtonAvatarBox: isMobile ? 'h-10 w-10' : 'h-8 w-8',
                   },
                 }}
               />
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                'flex items-center gap-3',
+                isMobile && 'min-h-13',
+              )}
+            >
               <UserButton
                 appearance={{
                   elements: {
-                    userButtonAvatarBox: 'h-8 w-8',
+                    userButtonAvatarBox: isMobile ? 'h-10 w-10' : 'h-8 w-8',
                   },
                 }}
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                <p
+                  className={cn(
+                    'truncate font-medium text-zinc-900 dark:text-zinc-50',
+                    isMobile ? 'text-base' : 'text-sm',
+                  )}
+                >
                   {displayName}
                 </p>
-                <p className="truncate text-xs text-zinc-500">Owner</p>
+                <p
+                  className={cn(
+                    'truncate text-zinc-500',
+                    isMobile ? 'text-sm' : 'text-xs',
+                  )}
+                >
+                  Owner
+                </p>
               </div>
             </div>
           )}
