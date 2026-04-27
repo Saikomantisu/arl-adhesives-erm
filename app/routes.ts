@@ -15,5 +15,6 @@ export default [
     route('inventory', 'routes/inventory/index.tsx'),
     route('customers', 'routes/customers/index.tsx'),
     route('customers/:customerId', 'routes/customers/$customerId.tsx'),
+    route('settings', 'routes/settings.tsx'),
   ]),
 ] satisfies RouteConfig;

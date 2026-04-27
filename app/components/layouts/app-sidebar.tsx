@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Plus,
+  Settings,
   Zap,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
@@ -57,6 +58,12 @@ const navItems: NavItem[] = [
     label: 'Customers',
     icon: Users,
     path: '/customers',
+    type: 'link',
+  },
+  {
+    label: 'Settings',
+    icon: Settings,
+    path: '/settings',
     type: 'link',
   },
 ];
