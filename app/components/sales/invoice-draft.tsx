@@ -18,9 +18,6 @@ export function InvoiceDraft() {
           invoice: {
             customer_id: document.customer_id,
             po_number: document.po_number ?? '',
-            subtotal: document.subtotal,
-            tax: document.tax,
-            total: document.total,
           },
           invoiceItems: items,
         })

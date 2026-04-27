@@ -6,6 +6,10 @@ export interface Product {
   sku: string;
   name: string;
   price_per_kg: number;
+  default_price_per_kg?: number;
+  effective_price_per_kg?: number;
+  effective_product_price?: number;
+  has_customer_override?: boolean;
   package_weight_kg: number;
   threshold: number;
   current_stock_boxes: number;
@@ -84,6 +88,7 @@ export interface SalesLineItem {
   total_weight_kg: number; // quantity * package_weight_kg
   price_per_kg: number; // Your base rate (e.g., 2750)
   total_price: number; // total_weight_kg * price_per_kg
+  has_customer_override?: boolean;
 }
 
 export interface InvoiceItem extends SalesLineItem {
@@ -92,6 +97,20 @@ export interface InvoiceItem extends SalesLineItem {
 
 export interface QuotationItem extends SalesLineItem {
   quotation_id?: string;
+}
+
+export interface CustomerProductPrice {
+  id?: string;
+  customer_id: string;
+  product_id: string;
+  sku: string;
+  name: string;
+  package_weight_kg: number;
+  default_price_per_kg: number;
+  price_per_kg: number;
+  effective_product_price: number;
+  created_at?: number;
+  updated_at?: number;
 }
 
 export const formatCurrency = (n: number) =>

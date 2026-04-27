@@ -6,6 +6,7 @@ const QUOTATION_NUMBER_REGEX = /^ARL\/QTN-(\d{2})\/(\d{2})\/(\d{2})$/;
 const AOD_NUMBER_REGEX = /^ARL\/AOD-(\d{2})\/(\d{2})\/(\d{2})$/;
 
 type DbCtx = QueryCtx | MutationCtx;
+const TAX_RATE = 0.18;
 
 export const getById = async <T extends TableNames>(
   ctx: DbCtx,
@@ -175,10 +176,33 @@ export const mapProduct = (doc: Doc<'products'>) => ({
   sku: doc.sku,
   name: doc.name,
   price_per_kg: Number(doc.pricePerKg ?? 0),
+  default_price_per_kg: Number(doc.pricePerKg ?? 0),
+  effective_price_per_kg: Number(doc.pricePerKg ?? 0),
+  effective_product_price:
+    Number(doc.pricePerKg ?? 0) * Number(doc.packageWeightKg ?? 0),
+  has_customer_override: false,
   package_weight_kg: Number(doc.packageWeightKg ?? 0),
   threshold: Number(doc.threshold ?? 0),
   current_stock_boxes: Number(doc.currentStockBoxes ?? 0),
   stock_velocity: Array.isArray(doc.stockVelocity) ? doc.stockVelocity : [],
+});
+
+export const mapCustomerProductPrice = (
+  doc: Doc<'customerProductPrices'>,
+  product: Doc<'products'>,
+) => ({
+  id: doc._id,
+  customer_id: doc.customerId,
+  product_id: doc.productId,
+  sku: product.sku,
+  name: product.name,
+  package_weight_kg: Number(product.packageWeightKg ?? 0),
+  default_price_per_kg: Number(product.pricePerKg ?? 0),
+  price_per_kg: Number(doc.pricePerKg ?? 0),
+  effective_product_price:
+    Number(doc.pricePerKg ?? 0) * Number(product.packageWeightKg ?? 0),
+  created_at: doc.createdAt,
+  updated_at: doc.updatedAt,
 });
 
 export const mapInvoice = (doc: Doc<'invoices'>) => ({
@@ -275,3 +299,38 @@ export const filterToMonth = <T extends { createdAt: number }>(
 export const sortByCreatedAtDesc = <T extends { createdAt: number }>(
   rows: T[],
 ) => [...rows].sort((a, b) => b.createdAt - a.createdAt);
+
+export const getCustomerProductPriceOverride = async (
+  ctx: DbCtx,
+  customerId: Id<'customers'>,
+  productId: Id<'products'>,
+) =>
+  ctx.db
+    .query('customerProductPrices')
+    .withIndex('by_customer_id_and_product_id', (q) =>
+      q.eq('customerId', customerId).eq('productId', productId),
+    )
+    .unique();
+
+export const resolveEffectivePricePerKg = async (
+  ctx: DbCtx,
+  customerId: Id<'customers'>,
+  productId: Id<'products'>,
+  defaultPricePerKg: number,
+) => {
+  const override = await getCustomerProductPriceOverride(
+    ctx,
+    customerId,
+    productId,
+  );
+  return Number(override?.pricePerKg ?? defaultPricePerKg);
+};
+
+export const computeSalesTotals = (subtotal: number) => {
+  const tax = subtotal * TAX_RATE;
+  return {
+    subtotal,
+    tax,
+    total: subtotal + tax,
+  };
+};

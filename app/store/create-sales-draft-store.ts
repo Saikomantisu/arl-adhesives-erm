@@ -1,6 +1,12 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import type { SalesLineItem } from '~/lib/data';
 
+interface ProductPricingSnapshot {
+  effective_price_per_kg: number;
+  effective_product_price: number;
+  has_customer_override: boolean;
+}
+
 export interface SalesDraftState {
   customer_id: string | null;
   items: SalesLineItem[];
@@ -10,6 +16,9 @@ export interface SalesDraftState {
   addItem: (item: SalesLineItem) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, qty: number) => void;
+  repriceItems: (
+    pricingByProductId: Record<string, ProductPricingSnapshot>,
+  ) => void;
   clearSale: () => void;
   subtotal: () => number;
   tax: () => number;
@@ -67,6 +76,25 @@ export const createSalesDraftStore = (): SalesDraftStore =>
               }
             : item,
         ),
+      })),
+    repriceItems: (pricingByProductId) =>
+      set((state) => ({
+        items: state.items.map((item) => {
+          const pricing = pricingByProductId[item.product_id];
+          if (!pricing) return item;
+
+          const packageWeightKg =
+            item.quantity > 0 ? item.total_weight_kg / item.quantity : 0;
+
+          return {
+            ...item,
+            price_per_kg: pricing.effective_price_per_kg,
+            product_price: pricing.effective_product_price,
+            total_weight_kg: item.quantity * packageWeightKg,
+            total_price: item.quantity * pricing.effective_product_price,
+            has_customer_override: pricing.has_customer_override,
+          };
+        }),
       })),
     clearSale: () => set({ customer_id: null, items: [], po_number: '' }),
     subtotal: () =>

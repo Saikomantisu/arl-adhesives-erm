@@ -24,8 +24,14 @@ export function ProductCatalog({
 }: ProductCatalogProps) {
   const [search, setSearch] = useState('');
   const addItem = useDraftStore((state) => state.addItem);
+  const customerId = useDraftStore((state) => state.customer_id);
 
-  const productsQuery = useQuery(convexQuery(convexApi.products.list, {}));
+  const productsQuery = useQuery(
+    convexQuery(
+      convexApi.products.list,
+      customerId ? { customerId } : {},
+    ),
+  );
   const products = (productsQuery.data ?? []) as Product[];
 
   const filtered = products.filter(
@@ -37,7 +43,10 @@ export function ProductCatalog({
   const handleAdd = (product: Product) => {
     if (!allowOutOfStockSelection && product.current_stock_boxes === 0) return;
 
-    const product_price = product.price_per_kg * product.package_weight_kg;
+    const pricePerKg = product.effective_price_per_kg ?? product.price_per_kg;
+    const product_price =
+      product.effective_product_price ??
+      pricePerKg * product.package_weight_kg;
 
     addItem({
       product_id: product.id!,
@@ -46,7 +55,8 @@ export function ProductCatalog({
       product_price,
       total_price: product_price,
       total_weight_kg: product.package_weight_kg,
-      price_per_kg: product.price_per_kg,
+      price_per_kg: pricePerKg,
+      has_customer_override: Boolean(product.has_customer_override),
     });
   };
 
@@ -123,11 +133,32 @@ export function ProductCatalog({
                   </div>
 
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                      {formatCurrency(
-                        product.price_per_kg * product.package_weight_kg,
-                      )}
-                    </span>
+                    <div>
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                        {formatCurrency(
+                          product.effective_product_price ??
+                            product.price_per_kg * product.package_weight_kg,
+                        )}
+                      </span>
+                      {product.has_customer_override ? (
+                        <div className="mt-1 flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="border-sky-200 bg-sky-50 text-[10px] text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                          >
+                            Custom Price
+                          </Badge>
+                          <span className="text-[10px] text-zinc-500">
+                            Default{' '}
+                            {formatCurrency(
+                              (product.default_price_per_kg ??
+                                product.price_per_kg) *
+                                product.package_weight_kg,
+                            )}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
                     <div className="flex items-center gap-2">
                       {isOutOfStock ? (
                         <Badge

@@ -14,10 +14,17 @@ import { Separator } from '~/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { convexApi } from '~/lib/convex';
 import { Trash2, Minus, Plus, AlertTriangle, Loader2 } from 'lucide-react';
-import { formatCurrency, type Customer, type SalesLineItem } from '~/lib/data';
+import {
+  formatCurrency,
+  type Customer,
+  type Product,
+  type SalesLineItem,
+} from '~/lib/data';
 import { useNavigate } from 'react-router';
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SalesDraftStore } from '~/store/create-sales-draft-store';
+import { Badge } from '~/components/ui/badge';
+import { queryClient } from '~/lib/convex';
 
 interface SalesDocumentDraftProps {
   title: string;
@@ -32,11 +39,8 @@ interface SalesDocumentDraftProps {
     document: {
       customer_id: string;
       po_number?: string;
-      subtotal: number;
-      tax: number;
-      total: number;
     },
-    items: SalesLineItem[],
+    items: Array<Pick<SalesLineItem, 'product_id' | 'quantity'>>,
   ) => Promise<{ id?: string }>;
 }
 
@@ -63,16 +67,74 @@ export function SalesDocumentDraft({
     setPoNumber,
     removeItem,
     updateQuantity,
+    repriceItems,
     clearSale,
     subtotal,
     tax,
     total,
   } = useDraftStore();
 
-  const customersQuery = useQuery(convexQuery(convexApi.customers.list, {}));
+  const customersQueryOptions = convexQuery(convexApi.customers.list, {});
+  const customersQuery = useQuery(customersQueryOptions);
   const customers = (customersQuery.data ?? []) as Customer[];
+  const productsQuery = useQuery(
+    convexQuery(
+      convexApi.products.list,
+      customer_id ? { customerId: customer_id } : {},
+    ),
+  );
+  const products = (productsQuery.data ?? []) as Product[];
   const selectedCustomer =
     customers.find((customer) => customer.id === customer_id) ?? null;
+  const pricingSignatureRef = useRef<string | null>(null);
+
+  const pricingByProductId = useMemo(
+    () =>
+      products.reduce<
+        Record<
+          string,
+          {
+            effective_price_per_kg: number;
+            effective_product_price: number;
+            has_customer_override: boolean;
+          }
+        >
+      >((acc, product) => {
+        if (!product.id) return acc;
+
+        acc[product.id] = {
+          effective_price_per_kg:
+            product.effective_price_per_kg ?? product.price_per_kg,
+          effective_product_price:
+            product.effective_product_price ??
+            product.price_per_kg * product.package_weight_kg,
+          has_customer_override: Boolean(product.has_customer_override),
+        };
+        return acc;
+      }, {}),
+    [products],
+  );
+
+  useEffect(() => {
+    if (items.length === 0 || productsQuery.isLoading || products.length === 0) {
+      return;
+    }
+
+    const signature = JSON.stringify(
+      Object.entries(pricingByProductId).sort(([a], [b]) => a.localeCompare(b)),
+    );
+
+    if (pricingSignatureRef.current === signature) return;
+
+    pricingSignatureRef.current = signature;
+    repriceItems(pricingByProductId);
+  }, [
+    items.length,
+    pricingByProductId,
+    products,
+    productsQuery.isLoading,
+    repriceItems,
+  ]);
 
   const handleCreate = async () => {
     if (!customer_id || (showPoNumber && !po_number) || isSubmitting) return;
@@ -85,12 +147,16 @@ export function SalesDocumentDraft({
         {
           customer_id,
           po_number: po_number || undefined,
-          subtotal: subtotal(),
-          tax: tax(),
-          total: total(),
         },
-        items,
+        items.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        })),
       );
+
+      await queryClient.invalidateQueries({
+        queryKey: customersQueryOptions.queryKey,
+      });
 
       clearSale();
       navigate(successPath, {
@@ -232,6 +298,16 @@ export function SalesDocumentDraft({
                     <p className="text-xs text-zinc-500">
                       {formatCurrency(item.product_price)} / unit
                     </p>
+                    {item.has_customer_override ? (
+                      <div className="mt-1">
+                        <Badge
+                          variant="outline"
+                          className="border-sky-200 bg-sky-50 text-[10px] text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                        >
+                          Custom
+                        </Badge>
+                      </div>
+                    ) : null}
                     <p className="text-xs text-zinc-500">
                       {item.total_weight_kg} kg
                     </p>

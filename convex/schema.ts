@@ -35,6 +35,16 @@ export default defineSchema({
     currentStockBoxes: v.number(),
   }).index('by_sku', ['sku']),
 
+  customerProductPrices: defineTable({
+    customerId: v.id('customers'),
+    productId: v.id('products'),
+    pricePerKg: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_customer_id', ['customerId'])
+    .index('by_customer_id_and_product_id', ['customerId', 'productId']),
+
   invoices: defineTable({
     number: v.string(),
     numberYear: v.optional(v.number()),
