@@ -105,7 +105,7 @@ export function ConvexAppProvider({ children }: { children: ReactNode }) {
             isAuthenticated: clerkAuth.isSignedIn ?? false,
             fetchAccessToken,
           }),
-          [fetchAccessToken]
+          [fetchAccessToken],
         );
       },
     [
@@ -116,16 +116,14 @@ export function ConvexAppProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return (
+  return createElement(
+    ConvexAuthDiagnosticContext.Provider,
+    { value: diagnostic },
     createElement(
-      ConvexAuthDiagnosticContext.Provider,
-      { value: diagnostic },
-      createElement(
-        ConvexProviderWithAuth,
-        { client: convexReactClient, useAuth: useAuthForConvex },
-        children,
-      ),
-    )
+      ConvexProviderWithAuth,
+      { client: convexReactClient, useAuth: useAuthForConvex },
+      children,
+    ),
   );
 }
 

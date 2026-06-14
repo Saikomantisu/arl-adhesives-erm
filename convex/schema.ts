@@ -33,6 +33,7 @@ export default defineSchema({
     pricePerKg: v.number(),
     packageWeightKg: v.number(),
     currentStockBoxes: v.number(),
+    currentStockKg: v.optional(v.number()),
   }).index('by_sku', ['sku']),
 
   customerProductPrices: defineTable({

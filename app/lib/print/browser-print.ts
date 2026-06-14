@@ -16,7 +16,8 @@ export const formatPrintDocumentTitle = (
   prefix: string,
   documentNumber?: string | null,
 ) => {
-  const normalizedNumber = documentNumber?.trim().replaceAll('/', '-') || prefix;
+  const normalizedNumber =
+    documentNumber?.trim().replaceAll('/', '-') || prefix;
   return `${prefix} ${normalizedNumber}`;
 };
 

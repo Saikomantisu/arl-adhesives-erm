@@ -1,11 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { requireAuthenticatedUser } from './auth';
-import {
-  getById,
-  mapCustomerProductPrice,
-  requireById,
-} from './lib';
+import { getById, mapCustomerProductPrice, requireById } from './lib';
 
 export const listByCustomer = query({
   args: {

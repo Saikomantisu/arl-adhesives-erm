@@ -66,8 +66,8 @@ export function buildAodHtml({
 
   const html = `
     <div class="w-[210mm] min-h-[297mm] bg-white text-black font-sans text-[14px] p-[15mm_20mm_10mm_20mm] shadow-sm flex flex-col">
-      <div class="flex-1 font-serif">
-        <div class="mb-4">
+      <div class="flex-1">
+        <div class="mb-4 font-serif">
           <div class="text-[26px] font-bold text-[#2a5f8f] underline leading-tight">ARL Adhesives</div>
           <div class="text-[13px] italic text-[#2a5f8f] leading-normal">
             No.3/6A, Edirigoda Road, Nugegoda, Sri Lanka.<br />

@@ -65,7 +65,9 @@ export const SalesDocumentTemplate = forwardRef<
 
         <div className="text-right italic text-sm mb-2">Customer Copy</div>
 
-        <h2 className="text-center text-2xl font-bold mb-8 font-serif">{documentTitle}</h2>
+        <h2 className="text-center text-2xl font-bold mb-8 font-serif">
+          {documentTitle}
+        </h2>
 
         <div className="flex justify-between mb-8 text-sm">
           <div className="max-w-[50%]">

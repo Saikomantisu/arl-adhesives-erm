@@ -28,7 +28,8 @@ export default function SettingsPage() {
   const statusQuery = useQuery({
     ...convexQuery(convexApi.maintenance.getLifetimeValueRebuildStatus, {}),
     refetchInterval: (query) =>
-      (query.state.data as MaintenanceJobStatus | undefined)?.status === 'running'
+      (query.state.data as MaintenanceJobStatus | undefined)?.status ===
+      'running'
         ? 1500
         : false,
   });
@@ -71,7 +72,10 @@ export default function SettingsPage() {
   const isRunning = status.status === 'running';
   const err = status.error ?? actionError;
   const showStatus =
-    isRunning || status.status === 'completed' || status.status === 'failed' || !!err;
+    isRunning ||
+    status.status === 'completed' ||
+    status.status === 'failed' ||
+    !!err;
 
   return (
     <div>
@@ -84,8 +88,8 @@ export default function SettingsPage() {
               Customer lifetime value
             </h2>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Rebuild customer totals from stored invoices after a production sync.
-              Invoice creation is paused while this runs.
+              Rebuild customer totals from stored invoices after a production
+              sync. Invoice creation is paused while this runs.
             </p>
           </div>
 
@@ -112,8 +116,8 @@ export default function SettingsPage() {
             <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
               {isRunning ? (
                 <p>
-                  {phaseCopy[status.phase]} — {status.processed_customers} customers,{' '}
-                  {status.processed_invoices} invoices
+                  {phaseCopy[status.phase]} — {status.processed_customers}{' '}
+                  customers, {status.processed_invoices} invoices
                 </p>
               ) : null}
               {status.status === 'completed' && status.finished_at ? (
@@ -122,7 +126,9 @@ export default function SettingsPage() {
               {err ? (
                 <p className="text-rose-600 dark:text-rose-400">{err}</p>
               ) : status.status === 'failed' ? (
-                <p className="text-rose-600 dark:text-rose-400">{phaseCopy.failed}</p>
+                <p className="text-rose-600 dark:text-rose-400">
+                  {phaseCopy.failed}
+                </p>
               ) : null}
             </div>
           ) : null}

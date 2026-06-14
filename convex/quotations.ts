@@ -17,6 +17,8 @@ import {
 const quotationItemInputValidator = v.object({
   product_id: v.string(),
   quantity: v.number(),
+  total_weight_kg: v.optional(v.number()),
+  is_custom_weight: v.optional(v.boolean()),
 });
 
 export const list = query({
@@ -97,9 +99,14 @@ export const create = mutation({
           product._id,
           Number(product.pricePerKg ?? 0),
         );
-        const totalWeightKg = item.quantity * Number(product.packageWeightKg ?? 0);
+        const totalWeightKg =
+          item.total_weight_kg ??
+          item.quantity * Number(product.packageWeightKg ?? 0);
+        if (totalWeightKg <= 0) {
+          throw new Error('Quotation item weight must be greater than 0');
+        }
         const productPrice = pricePerKg * Number(product.packageWeightKg ?? 0);
-        const totalPrice = item.quantity * productPrice;
+        const totalPrice = totalWeightKg * pricePerKg;
 
         return {
           item,

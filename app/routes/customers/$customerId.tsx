@@ -15,10 +15,7 @@ import {
 import { useEffect, useMemo, useState, type ElementType } from 'react';
 import { cn } from '~/lib/utils';
 import { motion } from 'framer-motion';
-import {
-  convexQuery,
-  useConvexMutation,
-} from '@convex-dev/react-query';
+import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import type {
   Activity,
   Customer,
@@ -95,11 +92,7 @@ const activityLabels: Record<Activity['type'], string> = {
   invoice_pending: 'Invoice Pending',
 };
 
-function CustomerPricingCard({
-  customerId,
-}: {
-  customerId: string;
-}) {
+function CustomerPricingCard({ customerId }: { customerId: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [draftValues, setDraftValues] = useState<Record<string, string>>({});
@@ -112,7 +105,9 @@ function CustomerPricingCard({
       customerId,
     }),
   );
-  const saveOverride = useConvexMutation(convexApi.customerProductPrices.upsert);
+  const saveOverride = useConvexMutation(
+    convexApi.customerProductPrices.upsert,
+  );
   const removeOverride = useConvexMutation(
     convexApi.customerProductPrices.remove,
   );
@@ -122,10 +117,13 @@ function CustomerPricingCard({
 
   const overridesByProductId = useMemo(
     () =>
-      overrides.reduce<Record<string, CustomerProductPrice>>((acc, override) => {
-        acc[override.product_id] = override;
-        return acc;
-      }, {}),
+      overrides.reduce<Record<string, CustomerProductPrice>>(
+        (acc, override) => {
+          acc[override.product_id] = override;
+          return acc;
+        },
+        {},
+      ),
     [overrides],
   );
 
@@ -252,16 +250,15 @@ function CustomerPricingCard({
             </CardDescription>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger
-              render={<Button variant="outline" size="sm" />}
-            >
+            <DialogTrigger render={<Button variant="outline" size="sm" />}>
               Manage Prices
             </DialogTrigger>
             <DialogContent className="grid !w-[calc(100vw-2rem)] !max-w-[96rem] gap-0 overflow-hidden p-0 sm:!w-[96vw]">
               <DialogHeader className="border-b border-zinc-100 px-6 py-5 pr-16 dark:border-zinc-800">
                 <DialogTitle>Manage Customer Pricing</DialogTitle>
                 <DialogDescription>
-                  Default product pricing applies unless this customer has an override.
+                  Default product pricing applies unless this customer has an
+                  override.
                 </DialogDescription>
               </DialogHeader>
 
@@ -313,11 +310,12 @@ function CustomerPricingCard({
                               : '');
                           const draftPrice = Number(rowValue);
                           const effectivePricePerKg =
-                            rowValue.trim() !== '' && Number.isFinite(draftPrice)
+                            rowValue.trim() !== '' &&
+                            Number.isFinite(draftPrice)
                               ? draftPrice
-                              : existingOverride?.price_per_kg ??
+                              : (existingOverride?.price_per_kg ??
                                 product.default_price_per_kg ??
-                                product.price_per_kg;
+                                product.price_per_kg);
                           const effectiveUnitPrice =
                             effectivePricePerKg * product.package_weight_kg;
                           const isPending = pendingProductId === productId;
