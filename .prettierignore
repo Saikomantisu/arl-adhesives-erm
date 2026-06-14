@@ -3,3 +3,4 @@ build
 .react-router
 convex/_generated
 public
+.agents

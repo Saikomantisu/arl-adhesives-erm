@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { query } from './_generated/server';
+import { mutation, query } from './_generated/server';
 import { requireAuthenticatedUser } from './auth';
 import { getById, mapProduct, requireById } from './lib';
 
@@ -36,8 +36,7 @@ export const list = query({
     return products.map((product) => {
       const defaultPricePerKg = Number(product.pricePerKg ?? 0);
       const overridePricePerKg = overrideByProductId[product._id];
-      const effectivePricePerKg =
-        overridePricePerKg ?? defaultPricePerKg;
+      const effectivePricePerKg = overridePricePerKg ?? defaultPricePerKg;
       const base = mapProduct(product);
 
       return {
@@ -61,5 +60,32 @@ export const get = query({
 
     const product = await getById(ctx, 'products', args.productId);
     return product ? mapProduct(product) : null;
+  },
+});
+
+export const backfillCurrentStockKg = mutation({
+  args: {
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuthenticatedUser(ctx);
+
+    const batchSize = Math.max(1, Math.min(args.batchSize ?? 50, 200));
+    let patched = 0;
+
+    for await (const product of ctx.db.query('products')) {
+      if (patched >= batchSize) break;
+      if (product.currentStockKg !== undefined) continue;
+
+      await ctx.db.patch(product._id, {
+        currentStockKg:
+          Number(product.currentStockBoxes ?? 0) *
+          Number(product.packageWeightKg ?? 0),
+        updatedAt: Date.now(),
+      });
+      patched += 1;
+    }
+
+    return { patched };
   },
 });

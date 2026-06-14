@@ -13,6 +13,7 @@ export interface Product {
   package_weight_kg: number;
   threshold: number;
   current_stock_boxes: number;
+  current_stock_kg: number;
   stock_velocity: number[];
 }
 
@@ -88,6 +89,8 @@ export interface SalesLineItem {
   total_weight_kg: number; // quantity * package_weight_kg
   price_per_kg: number; // Your base rate (e.g., 2750)
   total_price: number; // total_weight_kg * price_per_kg
+  line_id?: string;
+  is_custom_weight?: boolean;
   has_customer_override?: boolean;
 }
 

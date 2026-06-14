@@ -109,18 +109,14 @@ export function AppSidebar({
     user?.primaryEmailAddress?.emailAddress ??
     'Signed in user';
 
-  const mobileNavItemClass = isMobile
-    ? 'min-h-11 items-center py-2'
-    : 'h-9';
+  const mobileNavItemClass = isMobile ? 'min-h-11 items-center py-2' : 'h-9';
   const mobileSubItemClass = isMobile
     ? 'min-h-11 items-center py-2 text-sm pl-10 pr-3'
     : 'h-8 pl-8 pr-2 text-[13px]';
   const mobileNewSaleClass = isMobile
     ? 'min-h-11 justify-center gap-2 py-2.5 text-base font-medium'
     : 'py-2 text-sm';
-  const mobileCollapsedCta = isMobile
-    ? 'min-h-11 min-w-11 p-0'
-    : 'h-9 w-9';
+  const mobileCollapsedCta = isMobile ? 'min-h-11 min-w-11 p-0' : 'h-9 w-9';
 
   return (
     <TooltipProvider>
@@ -141,9 +137,7 @@ export function AppSidebar({
         <div
           className={cn(
             'flex shrink-0 items-center justify-between',
-            isMobile
-              ? 'min-h-14 gap-2 px-3 py-2'
-              : 'h-14 px-3',
+            isMobile ? 'min-h-14 gap-2 px-3 py-2' : 'h-14 px-3',
           )}
         >
           {!effectiveCollapsed && (
@@ -230,10 +224,7 @@ export function AppSidebar({
                 mobileNewSaleClass,
               )}
             >
-              <Plus
-                className={isMobile ? 'h-5 w-5' : 'h-4 w-4'}
-                aria-hidden
-              />
+              <Plus className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} aria-hidden />
               New Sale
             </NavLink>
           )}
@@ -271,9 +262,7 @@ export function AppSidebar({
                           onClick={handleNavigate}
                           className={cn(
                             'flex items-center justify-center rounded-md transition-colors',
-                            isMobile
-                              ? 'min-h-11 min-w-11 p-0'
-                              : 'h-9 w-9',
+                            isMobile ? 'min-h-11 min-w-11 p-0' : 'h-9 w-9',
                             active
                               ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400'
                               : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50',
@@ -412,10 +401,7 @@ export function AppSidebar({
             </div>
           ) : (
             <div
-              className={cn(
-                'flex items-center gap-3',
-                isMobile && 'min-h-13',
-              )}
+              className={cn('flex items-center gap-3', isMobile && 'min-h-13')}
             >
               <UserButton
                 appearance={{

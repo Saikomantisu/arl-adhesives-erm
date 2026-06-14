@@ -89,8 +89,7 @@ export default function HomePage() {
   const monthlyRevenue = invoices.reduce((sum, i) => sum + i.total, 0);
   const outstanding = paymentsDue.reduce((sum, i) => sum + i.total, 0);
   const stockValue = products.reduce(
-    (sum, p) =>
-      sum + p.price_per_kg * p.package_weight_kg * p.current_stock_boxes,
+    (sum, p) => sum + p.price_per_kg * p.current_stock_kg,
     0,
   );
 

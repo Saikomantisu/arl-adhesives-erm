@@ -20,7 +20,6 @@ import type { Product } from '~/lib/data';
 import { Search, AlertTriangle } from 'lucide-react';
 import { TopBar } from '~/components/layouts/top-bar';
 import { convexApi } from '~/lib/convex';
-import { Sparkline } from '~/components/shared/sparkline';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'All Products | ARL Adhesives' }];
@@ -92,7 +91,7 @@ export default function InventoryPage() {
               {filtered.map((product) => {
                 const isUrgent =
                   product.current_stock_boxes <= product.threshold;
-                const isOutOfStock = product.current_stock_boxes === 0;
+                const isOutOfStock = product.current_stock_kg <= 0;
 
                 return (
                   <div
@@ -129,6 +128,21 @@ export default function InventoryPage() {
                           >
                             {product.current_stock_boxes}
                           </span>
+                          <span className="text-zinc-400"> boxes</span>
+                          <span className="text-zinc-400"> / </span>
+                          <span
+                            className={cn(
+                              'font-semibold',
+                              isOutOfStock
+                                ? 'text-rose-600'
+                                : isUrgent
+                                  ? 'text-amber-600'
+                                  : 'text-zinc-900 dark:text-zinc-50',
+                            )}
+                          >
+                            {product.current_stock_kg}
+                          </span>
+                          <span className="text-zinc-400"> kg</span>
                           <span className="text-zinc-400">
                             {' '}
                             / {product.threshold} min
@@ -184,14 +198,13 @@ export default function InventoryPage() {
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Velocity</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {!isLoading && !error && filtered.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={5}
                         className="py-10 text-center text-sm text-zinc-500"
                       >
                         No products found.
@@ -202,7 +215,7 @@ export default function InventoryPage() {
                   {filtered.map((product) => {
                     const isUrgent =
                       product.current_stock_boxes <= product.threshold;
-                    const isOutOfStock = product.current_stock_boxes === 0;
+                    const isOutOfStock = product.current_stock_kg <= 0;
 
                     return (
                       <TableRow
@@ -230,7 +243,7 @@ export default function InventoryPage() {
                         </TableCell>
 
                         <TableCell className="text-right">
-                          <span
+                          <div
                             className={cn(
                               'text-sm font-semibold',
                               isOutOfStock
@@ -240,12 +253,15 @@ export default function InventoryPage() {
                                   : 'text-zinc-900 dark:text-zinc-50',
                             )}
                           >
-                            {product.current_stock_boxes}
-                          </span>
-                          <span className="text-xs text-zinc-400">
-                            {' '}
-                            / {product.threshold} min
-                          </span>
+                            {product.current_stock_boxes} boxes
+                          </div>
+                          <div className="text-xs text-zinc-500">
+                            {product.current_stock_kg} kg
+                            <span className="text-zinc-400">
+                              {' '}
+                              / {product.threshold} min
+                            </span>
+                          </div>
                         </TableCell>
 
                         <TableCell>
@@ -279,9 +295,6 @@ export default function InventoryPage() {
                               In Stock
                             </Badge>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <Sparkline data={product.stock_velocity} />
                         </TableCell>
                       </TableRow>
                     );

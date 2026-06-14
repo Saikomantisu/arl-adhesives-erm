@@ -27,10 +27,7 @@ export function ProductCatalog({
   const customerId = useDraftStore((state) => state.customer_id);
 
   const productsQuery = useQuery(
-    convexQuery(
-      convexApi.products.list,
-      customerId ? { customerId } : {},
-    ),
+    convexQuery(convexApi.products.list, customerId ? { customerId } : {}),
   );
   const products = (productsQuery.data ?? []) as Product[];
 
@@ -41,12 +38,11 @@ export function ProductCatalog({
   );
 
   const handleAdd = (product: Product) => {
-    if (!allowOutOfStockSelection && product.current_stock_boxes === 0) return;
+    if (!allowOutOfStockSelection && product.current_stock_kg <= 0) return;
 
     const pricePerKg = product.effective_price_per_kg ?? product.price_per_kg;
     const product_price =
-      product.effective_product_price ??
-      pricePerKg * product.package_weight_kg;
+      product.effective_product_price ?? pricePerKg * product.package_weight_kg;
 
     addItem({
       product_id: product.id!,
@@ -84,7 +80,7 @@ export function ProductCatalog({
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <AnimatePresence mode="popLayout">
           {filtered.map((product) => {
-            const isOutOfStock = product.current_stock_boxes === 0;
+            const isOutOfStock = product.current_stock_kg <= 0;
             const isLow =
               product.current_stock_boxes <= product.threshold && !isOutOfStock;
 
@@ -176,7 +172,8 @@ export function ProductCatalog({
                             text-amber-600 dark:border-amber-800
                             dark:bg-amber-950 dark:text-amber-400"
                         >
-                          {product.current_stock_boxes} left
+                          {product.current_stock_boxes} boxes /{' '}
+                          {product.current_stock_kg} kg
                         </Badge>
                       ) : (
                         <Badge
@@ -185,7 +182,8 @@ export function ProductCatalog({
                             text-emerald-600 dark:border-emerald-800
                             dark:bg-emerald-950 dark:text-emerald-400"
                         >
-                          {product.current_stock_boxes} boxes in stock
+                          {product.current_stock_boxes} boxes /{' '}
+                          {product.current_stock_kg} kg
                         </Badge>
                       )}
                     </div>

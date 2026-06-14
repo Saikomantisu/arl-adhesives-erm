@@ -13,7 +13,14 @@ import { convexQuery } from '@convex-dev/react-query';
 import { Separator } from '~/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
 import { convexApi } from '~/lib/convex';
-import { Trash2, Minus, Plus, AlertTriangle, Loader2 } from 'lucide-react';
+import {
+  Trash2,
+  Minus,
+  Plus,
+  AlertTriangle,
+  Loader2,
+  PackageOpen,
+} from 'lucide-react';
 import {
   formatCurrency,
   type Customer,
@@ -40,7 +47,12 @@ interface SalesDocumentDraftProps {
       customer_id: string;
       po_number?: string;
     },
-    items: Array<Pick<SalesLineItem, 'product_id' | 'quantity'>>,
+    items: Array<
+      Pick<
+        SalesLineItem,
+        'product_id' | 'quantity' | 'total_weight_kg' | 'is_custom_weight'
+      >
+    >,
   ) => Promise<{ id?: string }>;
 }
 
@@ -65,8 +77,10 @@ export function SalesDocumentDraft({
     po_number,
     setCustomer,
     setPoNumber,
+    addPartialItem,
     removeItem,
     updateQuantity,
+    updateWeight,
     repriceItems,
     clearSale,
     subtotal,
@@ -116,7 +130,11 @@ export function SalesDocumentDraft({
   );
 
   useEffect(() => {
-    if (items.length === 0 || productsQuery.isLoading || products.length === 0) {
+    if (
+      items.length === 0 ||
+      productsQuery.isLoading ||
+      products.length === 0
+    ) {
       return;
     }
 
@@ -151,6 +169,8 @@ export function SalesDocumentDraft({
         items.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
+          total_weight_kg: item.total_weight_kg,
+          is_custom_weight: item.is_custom_weight,
         })),
       );
 
@@ -279,83 +299,165 @@ export function SalesDocumentDraft({
               </p>
             </motion.div>
           ) : (
-            items.map((item) => (
-              <motion.div
-                key={item.product_id}
-                layout
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.15 }}
-                className="rounded-lg border border-zinc-200 bg-white p-3
-                  dark:border-zinc-700 dark:bg-zinc-800"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                      {item.name}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {formatCurrency(item.product_price)} / unit
-                    </p>
-                    {item.has_customer_override ? (
-                      <div className="mt-1">
-                        <Badge
-                          variant="outline"
-                          className="border-sky-200 bg-sky-50 text-[10px] text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300"
-                        >
-                          Custom
-                        </Badge>
+            items.map((item) => {
+              const lineId = item.line_id ?? item.product_id;
+
+              return (
+                <motion.div
+                  key={lineId}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.15 }}
+                  className={cn(
+                    'rounded-lg border bg-white p-3 dark:bg-zinc-800',
+                    item.is_custom_weight
+                      ? 'border-amber-200 bg-amber-50/40 dark:border-amber-900/70 dark:bg-amber-950/20'
+                      : 'border-zinc-200 dark:border-zinc-700',
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                          {item.name}
+                        </p>
+                        {item.is_custom_weight ? (
+                          <Badge
+                            variant="outline"
+                            className="border-amber-300 bg-amber-100 text-[10px] text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                          >
+                            <PackageOpen className="mr-1 h-3 w-3" />
+                            Partial box
+                          </Badge>
+                        ) : null}
                       </div>
+                      {!item.is_custom_weight ? (
+                        <p className="text-xs text-zinc-500">
+                          {formatCurrency(item.product_price)} / unit
+                        </p>
+                      ) : null}
+                      {item.has_customer_override ? (
+                        <div className="mt-1">
+                          <Badge
+                            variant="outline"
+                            className="border-sky-200 bg-sky-50 text-[10px] text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                          >
+                            Custom
+                          </Badge>
+                        </div>
+                      ) : null}
+                      {item.is_custom_weight ? (
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          {item.quantity} opened box · {item.total_weight_kg} kg
+                          billed
+                        </p>
+                      ) : (
+                        <p className="text-xs text-zinc-500">
+                          {item.total_weight_kg} kg
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-zinc-400 hover:text-rose-600"
+                      onClick={() => removeItem(lineId)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  <div className="mt-3 grid gap-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() =>
+                            updateQuantity(
+                              lineId,
+                              Math.max(1, item.quantity - 1),
+                            )
+                          }
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() =>
+                            updateQuantity(lineId, item.quantity + 1)
+                          }
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <span className="ml-1 text-xs text-zinc-500">
+                          {item.is_custom_weight ? 'opened box' : 'boxes'}
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                        {formatCurrency(item.total_price)}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_auto] items-end gap-2">
+                      {item.is_custom_weight ? (
+                        <label className="grid gap-1">
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                            Total kg
+                          </span>
+                          <Input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={item.total_weight_kg}
+                            onChange={(event) => {
+                              const nextWeight = Number(event.target.value);
+                              if (Number.isFinite(nextWeight)) {
+                                updateWeight(lineId, nextWeight);
+                              }
+                            }}
+                            onBlur={() => {
+                              if (item.total_weight_kg <= 0) {
+                                updateWeight(lineId, 0.01);
+                              }
+                            }}
+                            className="h-8 text-sm"
+                          />
+                        </label>
+                      ) : null}
+                      {item.is_custom_weight ? (
+                        <div className="flex h-8 items-center rounded-full border border-amber-200 bg-amber-100 px-3 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                          Partial box
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 text-xs"
+                          onClick={() => addPartialItem(lineId)}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Partial
+                        </Button>
+                      )}
+                    </div>
+                    {item.is_custom_weight ? (
+                      <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                        Partial box: invoice only {item.total_weight_kg} kg from
+                        this opened box.
+                      </p>
                     ) : null}
-                    <p className="text-xs text-zinc-500">
-                      {item.total_weight_kg} kg
-                    </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-zinc-400 hover:text-rose-600"
-                    onClick={() => removeItem(item.product_id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        updateQuantity(
-                          item.product_id,
-                          Math.max(1, item.quantity - 1),
-                        )
-                      }
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="w-8 text-center text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                      {item.quantity}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        updateQuantity(item.product_id, item.quantity + 1)
-                      }
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                    {formatCurrency(item.total_price)}
-                  </span>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              );
+            })
           )}
         </AnimatePresence>
       </div>

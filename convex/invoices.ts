@@ -23,6 +23,8 @@ import { activityTypeValidator, invoiceStatusValidator } from './model';
 const invoiceItemInputValidator = v.object({
   product_id: v.string(),
   quantity: v.number(),
+  total_weight_kg: v.optional(v.number()),
+  is_custom_weight: v.optional(v.boolean()),
 });
 
 const createActivityRecord = async (
@@ -101,7 +103,7 @@ export const itemsByInvoice = query({
     const items = await ctx.db
       .query('invoiceItems')
       .withIndex('by_invoice_id', (q) => q.eq('invoiceId', invoice._id))
-      .order('desc')
+      .order('asc')
       .collect();
 
     return items.map(mapInvoiceItem);
@@ -155,10 +157,11 @@ export const create = mutation({
           `Product ${item.product_id} not found`,
         );
 
-        const remainingStock =
-          Number(product.currentStockBoxes ?? 0) - Number(item.quantity ?? 0);
-        if (remainingStock < 0) {
-          throw new Error(`Insufficient stock for ${product.name}`);
+        const requestedWeightKg =
+          item.total_weight_kg ??
+          item.quantity * Number(product.packageWeightKg ?? 0);
+        if (requestedWeightKg <= 0) {
+          throw new Error('Invoice item weight must be greater than 0');
         }
 
         const pricePerKg = await resolveEffectivePricePerKg(
@@ -167,14 +170,13 @@ export const create = mutation({
           product._id,
           Number(product.pricePerKg ?? 0),
         );
-        const totalWeightKg = item.quantity * Number(product.packageWeightKg ?? 0);
+        const totalWeightKg = requestedWeightKg;
         const productPrice = pricePerKg * Number(product.packageWeightKg ?? 0);
-        const totalPrice = item.quantity * productPrice;
+        const totalPrice = totalWeightKg * pricePerKg;
 
         return {
           item,
           product,
-          remainingStock,
           pricePerKg,
           productPrice,
           totalWeightKg,
@@ -182,6 +184,62 @@ export const create = mutation({
         };
       }),
     );
+
+    const stockUseByProductId = new Map<
+      Id<'products'>,
+      {
+        product: (typeof resolvedItems)[number]['product'];
+        fullBoxQuantity: number;
+        totalWeightKg: number;
+      }
+    >();
+
+    for (const resolved of resolvedItems) {
+      const existing = stockUseByProductId.get(resolved.product._id);
+      const fullBoxQuantity = resolved.item.is_custom_weight
+        ? 0
+        : resolved.item.quantity;
+      if (existing) {
+        existing.fullBoxQuantity += fullBoxQuantity;
+        existing.totalWeightKg += resolved.totalWeightKg;
+      } else {
+        stockUseByProductId.set(resolved.product._id, {
+          product: resolved.product,
+          fullBoxQuantity,
+          totalWeightKg: resolved.totalWeightKg,
+        });
+      }
+    }
+
+    const remainingStockByProductId = new Map<
+      Id<'products'>,
+      { boxes: number; kg: number }
+    >();
+
+    for (const stockUse of stockUseByProductId.values()) {
+      const currentStockBoxes = Number(stockUse.product.currentStockBoxes ?? 0);
+      const packageWeightKg = Number(stockUse.product.packageWeightKg ?? 0);
+      const currentStockKg = Number(
+        stockUse.product.currentStockKg ?? currentStockBoxes * packageWeightKg,
+      );
+      const remainingKg = currentStockKg - stockUse.totalWeightKg;
+      const remainingBoxes =
+        packageWeightKg > 0 ? Math.floor(remainingKg / packageWeightKg) : 0;
+
+      if (currentStockBoxes - stockUse.fullBoxQuantity < 0) {
+        throw new Error(`Insufficient stock for ${stockUse.product.name}`);
+      }
+      if (remainingKg < 0) {
+        throw new Error(
+          `Insufficient stock weight for ${stockUse.product.name}`,
+        );
+      }
+
+      remainingStockByProductId.set(stockUse.product._id, {
+        boxes: remainingBoxes,
+        kg: remainingKg,
+      });
+    }
 
     const { subtotal, tax, total } = computeSalesTotals(
       resolvedItems.reduce((sum, item) => sum + item.totalPrice, 0),
@@ -228,9 +286,12 @@ export const create = mutation({
         totalPrice: resolved.totalPrice,
         createdAt: timestamp,
       });
+    }
 
-      await ctx.db.patch(resolved.product._id, {
-        currentStockBoxes: resolved.remainingStock,
+    for (const [productId, remainingStock] of remainingStockByProductId) {
+      await ctx.db.patch(productId, {
+        currentStockBoxes: remainingStock.boxes,
+        currentStockKg: remainingStock.kg,
         updatedAt: timestamp,
       });
     }

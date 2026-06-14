@@ -74,7 +74,11 @@ export const startLifetimeValueRebuild = mutation({
       });
     }
 
-    await ctx.scheduler.runAfter(0, internal.maintenance.runLifetimeValueRebuildBatch, {});
+    await ctx.scheduler.runAfter(
+      0,
+      internal.maintenance.runLifetimeValueRebuildBatch,
+      {},
+    );
 
     const job = await getLifetimeValueJob(ctx);
     return mapLifetimeValueJob(job);
@@ -112,7 +116,8 @@ export const runLifetimeValueRebuildBatch = internalMutation({
         await ctx.db.patch(job._id, {
           phase: page.isDone ? 'processing_invoices' : 'resetting_customers',
           cursor: page.isDone ? null : page.continueCursor,
-          processedCustomers: Number(job.processedCustomers ?? 0) + page.page.length,
+          processedCustomers:
+            Number(job.processedCustomers ?? 0) + page.page.length,
           updatedAt: now,
         });
 
@@ -136,13 +141,16 @@ export const runLifetimeValueRebuildBatch = internalMutation({
         const incrementByCustomerId = page.page.reduce<Record<string, number>>(
           (acc, invoice) => {
             const subtotal = Number(invoice.subtotal ?? 0);
-            acc[invoice.customerId] = Number(acc[invoice.customerId] ?? 0) + subtotal;
+            acc[invoice.customerId] =
+              Number(acc[invoice.customerId] ?? 0) + subtotal;
             return acc;
           },
           {},
         );
 
-        for (const [customerId, increment] of Object.entries(incrementByCustomerId)) {
+        for (const [customerId, increment] of Object.entries(
+          incrementByCustomerId,
+        )) {
           const customer = await getById(ctx, 'customers', customerId);
           if (!customer) continue;
 
@@ -156,7 +164,8 @@ export const runLifetimeValueRebuildBatch = internalMutation({
           status: page.isDone ? 'completed' : 'running',
           phase: page.isDone ? 'completed' : 'processing_invoices',
           cursor: page.isDone ? null : page.continueCursor,
-          processedInvoices: Number(job.processedInvoices ?? 0) + page.page.length,
+          processedInvoices:
+            Number(job.processedInvoices ?? 0) + page.page.length,
           finishedAt: page.isDone ? now : null,
           updatedAt: now,
         });
@@ -173,7 +182,9 @@ export const runLifetimeValueRebuildBatch = internalMutation({
       return null;
     } catch (error) {
       const detail =
-        error instanceof Error ? error.message : 'Lifetime value rebuild failed';
+        error instanceof Error
+          ? error.message
+          : 'Lifetime value rebuild failed';
 
       await ctx.db.patch(job._id, {
         status: 'failed',

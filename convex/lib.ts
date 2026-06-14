@@ -7,7 +7,8 @@ const AOD_NUMBER_REGEX = /^ARL\/AOD-(\d{2})\/(\d{2})\/(\d{2})$/;
 
 type DbCtx = QueryCtx | MutationCtx;
 const TAX_RATE = 0.18;
-export const LIFETIME_VALUE_REBUILD_TASK_NAME = 'customer_lifetime_value_rebuild';
+export const LIFETIME_VALUE_REBUILD_TASK_NAME =
+  'customer_lifetime_value_rebuild';
 
 export const getById = async <T extends TableNames>(
   ctx: DbCtx,
@@ -185,6 +186,10 @@ export const mapProduct = (doc: Doc<'products'>) => ({
   package_weight_kg: Number(doc.packageWeightKg ?? 0),
   threshold: Number(doc.threshold ?? 0),
   current_stock_boxes: Number(doc.currentStockBoxes ?? 0),
+  current_stock_kg: Number(
+    doc.currentStockKg ??
+      Number(doc.currentStockBoxes ?? 0) * Number(doc.packageWeightKg ?? 0),
+  ),
   stock_velocity: Array.isArray(doc.stockVelocity) ? doc.stockVelocity : [],
 });
 
