@@ -55,6 +55,7 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table';
+import { CustomerEditDialog } from '~/components/customers/customer-edit-dialog';
 
 const activityIcons: Record<Activity['type'], ElementType> = {
   invoice_generated: Send,
@@ -536,20 +537,23 @@ export default function CustomerPulsePage() {
             className="space-y-6 lg:col-span-1"
           >
             <Card className="p-6">
-              <div className="flex items-center gap-4">
-                <div
-                  className="flex h-14 w-14 items-center justify-center
-                    rounded-full bg-indigo-100 text-lg font-bold
-                    text-indigo-700 dark:bg-indigo-900
-                    dark:text-indigo-300"
-                >
-                  {customer.avatar}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div
+                    className="flex h-14 w-14 shrink-0 items-center justify-center
+                      rounded-full bg-indigo-100 text-lg font-bold
+                      text-indigo-700 dark:bg-indigo-900
+                      dark:text-indigo-300"
+                  >
+                    {customer.avatar}
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                      {customer.company}
+                    </h2>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                    {customer.company}
-                  </h2>
-                </div>
+                <CustomerEditDialog customer={customer} />
               </div>
 
               <div>
@@ -568,13 +572,13 @@ export default function CustomerPulsePage() {
                 <div className="flex items-center gap-3 text-sm">
                   <Phone className="h-4 w-4 text-zinc-400" />
                   <span className="text-zinc-700 dark:text-zinc-300">
-                    {customer.phone}
+                    {customer.phone || 'No phone number'}
                   </span>
                 </div>
                 <div className="flex items-start gap-3 text-sm">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
                   <span className="min-w-0 flex-1 break-words text-zinc-700 dark:text-zinc-300">
-                    {customer.address}
+                    {customer.address || 'No address'}
                   </span>
                 </div>
               </div>
@@ -587,7 +591,15 @@ export default function CustomerPulsePage() {
                     Tax Registration
                   </p>
                   <p className="mt-1 font-mono text-sm text-zinc-700 dark:text-zinc-300">
-                    {customer.vat_reg_no}
+                    {customer.vat_reg_no || 'Not provided'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                    Payee
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
+                    {customer.payee || 'Not provided'}
                   </p>
                 </div>
                 <div>
