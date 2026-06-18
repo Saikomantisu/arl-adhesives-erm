@@ -17,6 +17,7 @@ import { TopBar } from '~/components/layouts/top-bar';
 import { convexApi } from '~/lib/convex';
 import { StatusBadge } from '~/components/shared/status-badge';
 import { Button } from '~/components/ui/button';
+import { CustomerCreateDialog } from '~/components/customers/customer-create-dialog';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Customers | ARL Adhesives' }];
@@ -42,21 +43,24 @@ export default function CustomersIndexPage() {
           animate={{ opacity: 1, y: 0 }}
         >
           <Card className="gap-0 py-0">
-            <div className="border-b border-zinc-100 p-4 dark:border-zinc-800">
-              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                All Customers
-              </h2>
-              <p className="text-xs text-zinc-500">
-                {isLoading
-                  ? 'Loading customers…'
-                  : `${customers.length} customers`}
-                {isFetching && !isLoading ? (
-                  <span className="ml-2 inline-flex items-center gap-1 text-zinc-400">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Updating…
-                  </span>
-                ) : null}
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 p-4 dark:border-zinc-800">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  All Customers
+                </h2>
+                <p className="text-xs text-zinc-500">
+                  {isLoading
+                    ? 'Loading customers…'
+                    : `${customers.length} customers`}
+                  {isFetching && !isLoading ? (
+                    <span className="ml-2 inline-flex items-center gap-1 text-zinc-400">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Updating…
+                    </span>
+                  ) : null}
+                </p>
+              </div>
+              <CustomerCreateDialog />
             </div>
 
             {error ? (
@@ -162,6 +166,9 @@ export default function CustomersIndexPage() {
                 <p className="mt-1.5 max-w-md text-sm text-zinc-500 dark:text-zinc-400">
                   When you add customers, they’ll show up here.
                 </p>
+                <div className="mt-6">
+                  <CustomerCreateDialog label="Add your first customer" />
+                </div>
               </div>
             ) : (
               <>

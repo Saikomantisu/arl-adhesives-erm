@@ -21,6 +21,7 @@ import {
   queryClient,
   useConvexAuthDiagnostic,
 } from '~/lib/convex';
+import { Toaster } from '~/components/ui/sonner';
 import './app.css';
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -102,9 +103,12 @@ function AuthenticatedApp() {
   }
 
   return (
-    <main>
-      <Outlet />
-    </main>
+    <>
+      <main>
+        <Outlet />
+      </main>
+      <Toaster position="top-right" richColors />
+    </>
   );
 }
 

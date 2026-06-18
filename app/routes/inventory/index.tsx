@@ -20,6 +20,8 @@ import type { Product } from '~/lib/data';
 import { Search, AlertTriangle } from 'lucide-react';
 import { TopBar } from '~/components/layouts/top-bar';
 import { convexApi } from '~/lib/convex';
+import { ProductCreateDialog } from '~/components/products/product-create-dialog';
+import { ProductEditDialog } from '~/components/products/product-edit-dialog';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'All Products | ARL Adhesives' }];
@@ -69,7 +71,7 @@ export default function InventoryPage() {
 
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-3 border-b border-zinc-100 p-4 dark:border-zinc-800">
-              <div className="relative flex-1">
+              <div className="relative min-w-56 flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                 <Input
                   placeholder="Search products or SKU…"
@@ -78,6 +80,7 @@ export default function InventoryPage() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+              <ProductCreateDialog />
             </div>
 
             {/* Mobile cards */}
@@ -151,7 +154,7 @@ export default function InventoryPage() {
                       </div>
                     </div>
 
-                    <div className="mt-3">
+                    <div className="mt-3 flex items-center justify-between gap-3">
                       {isOutOfStock ? (
                         <Badge
                           variant="outline"
@@ -182,6 +185,7 @@ export default function InventoryPage() {
                           In Stock
                         </Badge>
                       )}
+                      <ProductEditDialog product={product} compact />
                     </div>
                   </div>
                 );
@@ -198,13 +202,14 @@ export default function InventoryPage() {
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="w-20 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {!isLoading && !error && filtered.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={6}
                         className="py-10 text-center text-sm text-zinc-500"
                       >
                         No products found.
@@ -295,6 +300,9 @@ export default function InventoryPage() {
                               In Stock
                             </Badge>
                           )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <ProductEditDialog product={product} />
                         </TableCell>
                       </TableRow>
                     );
